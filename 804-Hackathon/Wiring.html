@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wetbulb Rack – Easy Wiring Guide</title>
+<meta name="description" content="Simple step-by-step wiring guide for the Wetbulb rack: Arduino Uno, HW-131 USB power module, DHT11, LCD, fan motor with ULN2003, and joystick.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: hsl(225, 30%, 8%);
+    --card: hsla(225, 30%, 16%, 0.75);
+    --card-border: hsla(220, 40%, 70%, 0.12);
+    --text: hsl(220, 30%, 94%);
+    --muted: hsl(220, 15%, 68%);
+    --accent: hsl(185, 90%, 55%);
+    --accent2: hsl(265, 90%, 70%);
+    --plus: hsl(355, 85%, 62%);
+    --minus: hsl(215, 90%, 62%);
+    --pin: hsl(45, 95%, 58%);
+    --done: hsl(150, 70%, 50%);
+    --warn: hsl(30, 95%, 60%);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; scroll-padding-top: 120px; }
+  body {
+    font-family: 'Outfit', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 19px;
+    line-height: 1.55;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(circle at 10% 0%, hsla(185, 90%, 50%, 0.13), transparent 40%),
+      radial-gradient(circle at 90% 30%, hsla(265, 90%, 60%, 0.12), transparent 40%);
+    background-attachment: fixed;
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 10;
+    backdrop-filter: blur(14px);
+    background: hsla(225, 30%, 8%, 0.8);
+    border-bottom: 1px solid var(--card-border);
+    padding: 14px 20px 12px;
+  }
+  .topbar-inner { max-width: 860px; margin: 0 auto; }
+  .progress-row { display: flex; align-items: center; gap: 14px; }
+  .progress-track {
+    flex: 1; height: 10px; border-radius: 99px;
+    background: hsla(220, 30%, 50%, 0.18); overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 99px; transition: width .4s ease;
+  }
+  .progress-label { font-weight: 600; font-size: 15px; color: var(--muted); min-width: 120px; text-align: right; }
+  .nav { display: flex; gap: 8px; overflow-x: auto; margin-top: 10px; padding-bottom: 2px; scrollbar-width: none; }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav a {
+    flex-shrink: 0; text-decoration: none; color: var(--muted);
+    font-size: 14px; font-weight: 600; padding: 5px 12px; border-radius: 99px;
+    border: 1px solid var(--card-border); transition: all .2s;
+  }
+  .nav a:hover { color: var(--text); border-color: var(--accent); }
+  .nav a.complete { color: var(--done); border-color: hsla(150, 70%, 50%, .5); }
+
+  /* ---------- Layout ---------- */
+  main { max-width: 860px; margin: 0 auto; padding: 36px 20px 80px; }
+  header.hero { text-align: center; margin-bottom: 32px; }
+  .hero h1 {
+    font-size: clamp(32px, 6vw, 48px); font-weight: 800; line-height: 1.1;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero p { color: var(--muted); margin-top: 10px; }
+
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+    margin: 18px 0 8px;
+  }
+
+  .alert {
+    display: flex; gap: 14px; align-items: flex-start;
+    padding: 16px 20px; border-radius: 16px; margin: 16px 0;
+    background: hsla(30, 95%, 55%, 0.12);
+    border: 1px solid hsla(30, 95%, 60%, 0.4);
+  }
+  .alert .icon { font-size: 26px; line-height: 1.2; }
+  .alert.info { background: hsla(185, 90%, 50%, 0.10); border-color: hsla(185, 90%, 55%, 0.35); }
+
+  section.part {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 22px;
+    padding: 26px 26px 20px;
+    margin-bottom: 26px;
+    box-shadow: 0 20px 50px -25px rgba(0,0,0,.6);
+    animation: rise .5s ease both;
+  }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+  .part-head { display: flex; align-items: center; gap: 16px; margin-bottom: 6px; }
+  .num {
+    width: 48px; height: 48px; flex-shrink: 0; border-radius: 14px;
+    display: grid; place-items: center; font-weight: 800; font-size: 22px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2)); color: hsl(225, 30%, 10%);
+    transition: background .3s;
+  }
+  section.part.complete .num { background: var(--done); }
+  .part-head h2 { font-size: 26px; font-weight: 800; }
+  .part-sub { color: var(--muted); margin: 0 0 14px 64px; font-size: 17px; }
+
+  /* ---------- Steps ---------- */
+  ol.steps { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .step label {
+    display: flex; align-items: center; gap: 16px; cursor: pointer;
+    padding: 14px 16px; border-radius: 14px;
+    background: hsla(225, 30%, 22%, 0.55);
+    border: 1px solid transparent;
+    transition: background .2s, border-color .2s, transform .15s;
+  }
+  .step label:hover { border-color: hsla(185, 90%, 55%, .4); transform: translateX(3px); }
+  .step input { position: absolute; opacity: 0; pointer-events: none; }
+  .box {
+    width: 28px; height: 28px; flex-shrink: 0; border-radius: 8px;
+    border: 2.5px solid var(--muted); display: grid; place-items: center;
+    transition: all .2s;
+  }
+  .box::after { content: '✓'; font-weight: 800; font-size: 18px; color: hsl(225,30%,10%); transform: scale(0); transition: transform .2s; }
+  .step input:checked + .box { background: var(--done); border-color: var(--done); }
+  .step input:checked + .box::after { transform: scale(1); }
+  .step input:checked ~ .txt { opacity: .5; text-decoration: line-through; text-decoration-color: hsla(0,0%,100%,.3); }
+  .step input:focus-visible + .box { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .txt { flex: 1; }
+  .arrow { color: var(--accent); font-weight: 800; margin: 0 6px; }
+
+  /* ---------- Tags ---------- */
+  .tag {
+    display: inline-block; padding: 2px 11px; border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 16px;
+    white-space: nowrap; vertical-align: 1px;
+  }
+  .tag.plus  { background: hsla(355, 85%, 60%, .18); color: var(--plus);  border: 1px solid hsla(355, 85%, 60%, .5); }
+  .tag.minus { background: hsla(215, 90%, 60%, .18); color: var(--minus); border: 1px solid hsla(215, 90%, 60%, .5); }
+  .tag.pin   { background: hsla(45, 95%, 55%, .16);  color: var(--pin);   border: 1px solid hsla(45, 95%, 55%, .5); }
+  .tag.part  { background: hsla(220, 30%, 60%, .16); color: var(--text);  border: 1px solid hsla(220, 30%, 70%, .3); }
+  .tag.none  { background: transparent; color: var(--muted); border: 1px dashed var(--muted); }
+
+  .tip {
+    margin-top: 14px; padding: 12px 16px; border-left: 4px solid var(--accent);
+    background: hsla(185, 90%, 50%, 0.07); border-radius: 0 12px 12px 0;
+    font-size: 17px; color: var(--muted);
+  }
+  .tip b { color: var(--text); }
+  .tip.warn { border-color: var(--warn); background: hsla(30, 95%, 55%, 0.08); }
+
+  /* ---------- Tabs ---------- */
+  .tabs { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .tab {
+    font: inherit; font-size: 16px; font-weight: 600; cursor: pointer;
+    padding: 9px 16px; border-radius: 12px; color: var(--muted);
+    background: hsla(225, 30%, 22%, 0.55); border: 1px solid var(--card-border);
+    transition: all .2s;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: hsl(225,30%,10%); background: linear-gradient(90deg, var(--accent), var(--accent2)); border-color: transparent; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; animation: rise .3s ease both; }
+
+  /* ---------- Troubleshooting ---------- */
+  details {
+    background: hsla(225, 30%, 22%, 0.55); border-radius: 14px;
+    margin-bottom: 10px; border: 1px solid transparent; transition: border-color .2s;
+  }
+  details[open] { border-color: hsla(185, 90%, 55%, .35); }
+  summary {
+    cursor: pointer; padding: 14px 18px; font-weight: 600; list-style: none;
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: '+'; font-size: 24px; color: var(--accent); transition: transform .2s; }
+  details[open] summary::after { transform: rotate(45deg); }
+  details .fix { padding: 0 18px 16px; color: var(--muted); }
+  details .fix ol { padding-left: 22px; }
+  details .fix li { margin: 4px 0; }
+
+  code {
+    font-family: 'JetBrains Mono', monospace; font-size: 15px;
+    background: hsla(220, 30%, 60%, .15); padding: 2px 7px; border-radius: 6px; color: var(--text);
+    word-break: break-word;
+  }
+
+  .reset-btn {
+    display: block; margin: 30px auto 0; font: inherit; font-weight: 600; font-size: 16px;
+    color: var(--muted); background: none; border: 1px solid var(--card-border);
+    padding: 10px 20px; border-radius: 12px; cursor: pointer; transition: all .2s;
+  }
+  .reset-btn:hover { color: var(--text); border-color: var(--plus); }
+
+  .diagram {
+    margin: 4px 0 18px; padding: 16px; border-radius: 18px;
+    background: hsla(225, 30%, 10%, 0.7); border: 1px solid var(--card-border);
+  }
+  .diagram svg { width: 100%; height: auto; display: block; }
+  .diagram-title { font-weight: 800; font-size: 20px; margin-bottom: 10px; }
+  .how-to { list-style: none; display: grid; gap: 8px; margin-top: 14px; }
+  .how-to li { display: flex; gap: 12px; align-items: flex-start; }
+  .how-to .dot {
+    flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+    font-weight: 800; font-size: 15px; color: hsl(225,30%,10%);
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+  }
+
+  .celebrate {
+    display: none; text-align: center; padding: 26px; border-radius: 22px; margin-bottom: 26px;
+    background: linear-gradient(135deg, hsla(150,70%,45%,.2), hsla(185,90%,50%,.2));
+    border: 1px solid hsla(150,70%,50%,.5); font-size: 22px; font-weight: 800;
+  }
+  .celebrate.show { display: block; animation: rise .5s ease both; }
+
+  @media (max-width: 600px) {
+    body { font-size: 17px; }
+    section.part { padding: 20px 16px 16px; }
+    .part-sub { margin-left: 0; }
+    .part-head h2 { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="progress-row">
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+      <div class="progress-label" id="progress-label">0 / 0 done</div>
+    </div>
+    <nav class="nav" id="nav">
+      <a href="#power" data-part="power">1 Power</a>
+      <a href="#dht11" data-part="dht11">2 Sensor</a>
+      <a href="#lcd" data-part="lcd">3 Screen</a>
+      <a href="#fan" data-part="fan">4 Fan</a>
+      <a href="#joystick" data-part="joystick">5 Joystick</a>
+      <a href="#turnon" data-part="turnon">6 Turn On</a>
+      <a href="#upload" data-part="upload">7 Upload</a>
+      <a href="#test" data-part="test">8 Test</a>
+      <a href="#help">Help</a>
+    </nav>
+  </div>
+</div>
+
+<main>
+  <header class="hero">
+    <h1>Wetbulb Rack Wiring</h1>
+    <p>Do one step at a time and tick it off when it's done. Your progress is saved.</p>
+    <div class="legend">
+      <span class="tag plus">+ rail (red)</span>
+      <span class="tag minus">− rail (blue)</span>
+      <span class="tag pin">Arduino pin</span>
+      <span class="tag none">nothing</span>
+    </div>
+  </header>
+
+  <div class="alert">
+    <div class="icon">⚠️</div>
+    <div><b>Unplug everything before you start.</b> No USB cables plugged in while you wire.</div>
+  </div>
+
+  <div class="celebrate" id="celebrate">🎉 All done! Your rack is wired and tested.</div>
+
+  <!-- ================= 1. POWER ================= -->
+  <section class="part" id="power" data-part="power">
+    <div class="part-head"><div class="num">1</div><h2>Power (HW-131)</h2></div>
+    <p class="part-sub">The HW-131 powers the breadboard from a <b>USB port</b>. The Arduino gets power from the laptop.</p>
+
+    <div class="diagram" id="breadboard-diagram">
+      <div class="diagram-title">Which rail is "top" and which is "bottom"?</div>
+      <svg viewBox="0 0 800 440" role="img" aria-label="Breadboard seen from above: top rails on the far edge, bottom rails on the edge nearest you, HW-131 plugged into the left end">
+        <defs>
+          <pattern id="holes" width="14" height="14" patternUnits="userSpaceOnUse">
+            <rect x="5" y="5" width="4" height="4" rx="1" fill="#8f897c"/>
+          </pattern>
+        </defs>
+
+        <!-- labels -->
+        <text x="460" y="26" text-anchor="middle" font-family="Outfit" font-weight="800" font-size="20" fill="hsl(185,90%,55%)">▲ TOP rails (far edge): screen, sensor, joystick</text>
+        <text x="460" y="406" text-anchor="middle" font-family="Outfit" font-weight="800" font-size="20" fill="hsl(265,90%,72%)">▼ BOTTOM rails (edge nearest you): fan motor ONLY</text>
+        <text x="460" y="434" text-anchor="middle" font-family="Outfit" font-size="16" fill="hsl(220,15%,68%)">🧍 you sit here</text>
+
+        <!-- breadboard -->
+        <rect x="120" y="40" width="660" height="340" rx="14" fill="#ebe6da"/>
+
+        <!-- top rails -->
+        <rect x="124" y="44" width="652" height="54" rx="8" fill="hsla(185,90%,50%,0.12)" stroke="hsl(185,90%,45%)" stroke-width="2.5" stroke-dasharray="8 5"/>
+        <line x1="170" y1="50" x2="765" y2="50" stroke="#e0384b" stroke-width="3"/>
+        <rect x="170" y="54" width="595" height="14" fill="url(#holes)"/>
+        <rect x="170" y="74" width="595" height="14" fill="url(#holes)"/>
+        <line x1="170" y1="92" x2="765" y2="92" stroke="#2f6fe0" stroke-width="3"/>
+        <text x="770" y="66" font-family="Outfit" font-weight="800" font-size="16" fill="#e0384b">+</text>
+        <text x="770" y="86" font-family="Outfit" font-weight="800" font-size="16" fill="#2f6fe0">−</text>
+
+        <!-- middle -->
+        <rect x="170" y="110" width="595" height="84" fill="url(#holes)"/>
+        <rect x="124" y="199" width="652" height="12" fill="#d6cfbf"/>
+        <rect x="170" y="216" width="595" height="84" fill="url(#holes)"/>
+        <rect x="330" y="186" width="260" height="38" rx="10" fill="#ebe6da"/>
+        <text x="460" y="211" text-anchor="middle" font-family="Outfit" font-weight="600" font-size="17" fill="#6b665c">middle: parts plug in here</text>
+
+        <!-- bottom rails -->
+        <rect x="124" y="310" width="652" height="58" rx="8" fill="hsla(265,90%,60%,0.12)" stroke="hsl(265,80%,62%)" stroke-width="2.5" stroke-dasharray="8 5"/>
+        <line x1="170" y1="318" x2="765" y2="318" stroke="#2f6fe0" stroke-width="3"/>
+        <rect x="170" y="322" width="595" height="14" fill="url(#holes)"/>
+        <rect x="170" y="342" width="595" height="14" fill="url(#holes)"/>
+        <line x1="170" y1="360" x2="765" y2="360" stroke="#e0384b" stroke-width="3"/>
+        <text x="770" y="334" font-family="Outfit" font-weight="800" font-size="16" fill="#2f6fe0">−</text>
+        <text x="770" y="354" font-family="Outfit" font-weight="800" font-size="16" fill="#e0384b">+</text>
+
+        <!-- HW-131 module -->
+        <rect x="40" y="34" width="122" height="352" rx="12" fill="hsl(220,45%,22%)" stroke="hsl(185,90%,55%)" stroke-width="2"/>
+        <rect x="24" y="186" width="26" height="48" rx="5" fill="#c9ced6" stroke="#8a929e" stroke-width="2"/>
+        <text x="14" y="210" text-anchor="middle" font-family="Outfit" font-weight="800" font-size="14" fill="hsl(220,30%,94%)" transform="rotate(-90 14 210)">USB</text>
+        <text x="104" y="210" text-anchor="middle" font-family="Outfit" font-weight="800" font-size="22" fill="hsl(220,30%,94%)" transform="rotate(-90 104 210)">HW-131</text>
+        <rect x="118" y="106" width="30" height="16" rx="3" fill="hsl(45,95%,58%)"/>
+        <text x="133" y="118" text-anchor="middle" font-family="Outfit" font-weight="800" font-size="11" fill="#222">5V</text>
+        <rect x="118" y="290" width="30" height="16" rx="3" fill="hsl(45,95%,58%)"/>
+        <text x="133" y="302" text-anchor="middle" font-family="Outfit" font-weight="800" font-size="11" fill="#222">5V</text>
+        <!-- HW-131 pins going into all 4 rails -->
+        <g fill="hsl(45,95%,58%)">
+          <circle cx="145" cy="61" r="5"/><circle cx="145" cy="81" r="5"/>
+          <circle cx="145" cy="329" r="5"/><circle cx="145" cy="349" r="5"/>
+        </g>
+      </svg>
+
+      <ul class="how-to">
+        <li><span class="dot">1</span><span>Lay the breadboard flat in front of you, <b>long side going left to right</b>.</span></li>
+        <li><span class="dot">2</span><span>The 2 rails along the <b>far edge</b> (away from you) are the <b>TOP rails</b>.</span></li>
+        <li><span class="dot">3</span><span>The 2 rails along the <b>edge closest to you</b> are the <b>BOTTOM rails</b>.</span></li>
+        <li><span class="dot">4</span><span>Each edge has one <span class="tag plus">+ red</span> line and one <span class="tag minus">− blue</span> line. Use the lines printed on <b>your</b> board.</span></li>
+        <li><span class="dot">5</span><span>The HW-131 sits on one end and plugs into <b>all 4 rails at once</b>.</span></li>
+      </ul>
+      <div class="tip"><b>Easy trick:</b> stick a bit of tape on the far edge that says <b>LOGIC</b> and on the near edge that says <b>MOTOR</b>. Don't turn the board around after that.</div>
+      <div class="tip warn"><b>Look for a gap:</b> on some long breadboards the red/blue lines have a <b>break halfway along</b>. That means the rail is cut in two. If yours has a break, add a short jumper wire across the gap on <b>each</b> of the 4 rails.</div>
+    </div>
+
+    <ol class="steps">
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt">Push the <span class="tag part">HW-131</span> onto one end of the breadboard. Its pins go into <b>both</b> the top and bottom rails.</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt">Check: HW-131 <b>+</b> is in the <span class="tag plus">+ red</span> rail, and <b>−</b> is in the <span class="tag minus">− blue</span> rail. Some boards line up backwards!</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt">Set <b>both</b> HW-131 jumpers to <b>5V</b> (not 3.3V, not OFF).</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt">Plug a USB cable into the HW-131's <b>USB port</b>. <b>Don't plug the other end in yet.</b></span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt">Arduino <span class="tag pin">GND</span><span class="arrow">→</span><span class="tag minus">top − rail</span></span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt"><span class="tag minus">top − rail</span><span class="arrow">→</span><span class="tag minus">bottom − rail</span> (one jumper wire, so all grounds are joined)</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt">Arduino <span class="tag pin">5V</span><span class="arrow">→</span><span class="tag none">nothing</span> Leave it empty.</span></label></li>
+    </ol>
+    <div class="tip"><b>Remember:</b> <b>Top rails</b> are for the screen, sensor and joystick. <b>Bottom rails</b> are only for the fan motor. This stops the motor messing up the screen.</div>
+  </section>
+
+  <!-- ================= 2. DHT11 ================= -->
+  <section class="part" id="dht11" data-part="dht11">
+    <div class="part-head"><div class="num">2</div><h2>Temp Sensor (DHT11)</h2></div>
+    <p class="part-sub">Plug it <b>straight into the breadboard</b>, then run 3 short wires.</p>
+
+    <div class="diagram" id="dht11-diagram">
+      <div class="diagram-title">How it looks (close-up of the top half)</div>
+      <svg viewBox="0 0 760 400" role="img" aria-label="DHT11 plugged into row e of columns 10, 11 and 12, with wires from those columns to the top plus rail, top minus rail and Arduino D7">
+        <!-- board -->
+        <rect x="20" y="20" width="720" height="360" rx="14" fill="#ebe6da"/>
+
+        <!-- top rails -->
+        <line x1="50" y1="32" x2="720" y2="32" stroke="#e0384b" stroke-width="3"/>
+        <line x1="50" y1="84" x2="720" y2="84" stroke="#2f6fe0" stroke-width="3"/>
+        <text x="36" y="52" text-anchor="middle" font-family="Outfit" font-weight="800" font-size="18" fill="#e0384b">+</text>
+        <text x="36" y="76" text-anchor="middle" font-family="Outfit" font-weight="800" font-size="18" fill="#2f6fe0">−</text>
+        <g fill="#8f897c">
+          <circle cx="69" cy="46" r="4"/><circle cx="100" cy="46" r="4"/><circle cx="131" cy="46" r="4"/><circle cx="162" cy="46" r="4"/><circle cx="193" cy="46" r="4"/><circle cx="224" cy="46" r="4"/><circle cx="255" cy="46" r="4"/><circle cx="286" cy="46" r="4"/><circle cx="317" cy="46" r="4"/><circle cx="348" cy="46" r="4"/><circle cx="379" cy="46" r="4"/><circle cx="410" cy="46" r="4"/><circle cx="441" cy="46" r="4"/><circle cx="472" cy="46" r="4"/><circle cx="503" cy="46" r="4"/><circle cx="534" cy="46" r="4"/><circle cx="565" cy="46" r="4"/><circle cx="596" cy="46" r="4"/><circle cx="627" cy="46" r="4"/><circle cx="658" cy="46" r="4"/><circle cx="689" cy="46" r="4"/>
+          <circle cx="69" cy="70" r="4"/><circle cx="100" cy="70" r="4"/><circle cx="131" cy="70" r="4"/><circle cx="162" cy="70" r="4"/><circle cx="193" cy="70" r="4"/><circle cx="224" cy="70" r="4"/><circle cx="255" cy="70" r="4"/><circle cx="286" cy="70" r="4"/><circle cx="317" cy="70" r="4"/><circle cx="348" cy="70" r="4"/><circle cx="379" cy="70" r="4"/><circle cx="410" cy="70" r="4"/><circle cx="441" cy="70" r="4"/><circle cx="472" cy="70" r="4"/><circle cx="503" cy="70" r="4"/><circle cx="534" cy="70" r="4"/><circle cx="565" cy="70" r="4"/><circle cx="596" cy="70" r="4"/><circle cx="627" cy="70" r="4"/><circle cx="658" cy="70" r="4"/><circle cx="689" cy="70" r="4"/>
+        </g>
+
+        <!-- column highlights: each column of 5 holes is joined -->
+        <rect x="204" y="114" width="40" height="152" rx="12" fill="hsla(355,85%,60%,0.22)" stroke="#e0384b" stroke-width="2"/>
+        <rect x="266" y="114" width="40" height="152" rx="12" fill="hsla(45,95%,55%,0.28)" stroke="#d9a400" stroke-width="2"/>
+        <rect x="328" y="114" width="40" height="152" rx="12" fill="hsla(215,90%,60%,0.22)" stroke="#2f6fe0" stroke-width="2"/>
+
+        <!-- column numbers + row letters -->
+        <g font-family="JetBrains Mono" font-weight="700" font-size="14" fill="#6b665c" text-anchor="middle">
+          <text x="100" y="108">8</text><text x="162" y="108">9</text><text x="224" y="108">10</text><text x="286" y="108">11</text><text x="348" y="108">12</text><text x="410" y="108">13</text><text x="472" y="108">14</text><text x="534" y="108">15</text><text x="596" y="108">16</text><text x="658" y="108">17</text>
+          <text x="56" y="135">a</text><text x="56" y="165">b</text><text x="56" y="195">c</text><text x="56" y="225">d</text><text x="56" y="255">e</text>
+        </g>
+
+        <!-- middle holes rows a-e -->
+        <g fill="#8f897c">
+          <circle cx="100" cy="130" r="4.5"/><circle cx="162" cy="130" r="4.5"/><circle cx="224" cy="130" r="4.5"/><circle cx="286" cy="130" r="4.5"/><circle cx="348" cy="130" r="4.5"/><circle cx="410" cy="130" r="4.5"/><circle cx="472" cy="130" r="4.5"/><circle cx="534" cy="130" r="4.5"/><circle cx="596" cy="130" r="4.5"/><circle cx="658" cy="130" r="4.5"/>
+          <circle cx="100" cy="160" r="4.5"/><circle cx="162" cy="160" r="4.5"/><circle cx="224" cy="160" r="4.5"/><circle cx="286" cy="160" r="4.5"/><circle cx="348" cy="160" r="4.5"/><circle cx="410" cy="160" r="4.5"/><circle cx="472" cy="160" r="4.5"/><circle cx="534" cy="160" r="4.5"/><circle cx="596" cy="160" r="4.5"/><circle cx="658" cy="160" r="4.5"/>
+          <circle cx="100" cy="190" r="4.5"/><circle cx="162" cy="190" r="4.5"/><circle cx="224" cy="190" r="4.5"/><circle cx="286" cy="190" r="4.5"/><circle cx="348" cy="190" r="4.5"/><circle cx="410" cy="190" r="4.5"/><circle cx="472" cy="190" r="4.5"/><circle cx="534" cy="190" r="4.5"/><circle cx="596" cy="190" r="4.5"/><circle cx="658" cy="190" r="4.5"/>
+          <circle cx="100" cy="220" r="4.5"/><circle cx="162" cy="220" r="4.5"/><circle cx="224" cy="220" r="4.5"/><circle cx="286" cy="220" r="4.5"/><circle cx="348" cy="220" r="4.5"/><circle cx="410" cy="220" r="4.5"/><circle cx="472" cy="220" r="4.5"/><circle cx="534" cy="220" r="4.5"/><circle cx="596" cy="220" r="4.5"/><circle cx="658" cy="220" r="4.5"/>
+          <circle cx="100" cy="250" r="4.5"/><circle cx="162" cy="250" r="4.5"/><circle cx="410" cy="250" r="4.5"/><circle cx="472" cy="250" r="4.5"/><circle cx="534" cy="250" r="4.5"/><circle cx="596" cy="250" r="4.5"/><circle cx="658" cy="250" r="4.5"/>
+        </g>
+
+        <!-- middle gap -->
+        <rect x="40" y="280" width="680" height="14" fill="#d6cfbf"/>
+        <text x="560" y="318" text-anchor="middle" font-family="Outfit" font-size="15" fill="#8f897c">(middle gap → bottom half below)</text>
+
+        <!-- DHT11 sensor -->
+        <line x1="224" y1="250" x2="224" y2="290" stroke="#b8b8b8" stroke-width="4"/>
+        <line x1="286" y1="250" x2="286" y2="290" stroke="#b8b8b8" stroke-width="4"/>
+        <line x1="348" y1="250" x2="348" y2="290" stroke="#b8b8b8" stroke-width="4"/>
+        <rect x="190" y="288" width="192" height="80" rx="10" fill="#3a7bd5" stroke="#1f4f99" stroke-width="2"/>
+        <g stroke="#6fa3ee" stroke-width="2">
+          <line x1="215" y1="318" x2="357" y2="318"/><line x1="215" y1="332" x2="357" y2="332"/><line x1="215" y1="346" x2="357" y2="346"/>
+        </g>
+        <text x="286" y="362" text-anchor="middle" font-family="Outfit" font-weight="800" font-size="14" fill="#fff">DHT11 (grid facing you)</text>
+        <g font-family="JetBrains Mono" font-weight="700" font-size="15" fill="#fff" text-anchor="middle">
+          <text x="224" y="307">+</text><text x="286" y="307">S</text><text x="348" y="307">−</text>
+        </g>
+        <g fill="hsl(45,95%,58%)" stroke="#8a6d00" stroke-width="1.5">
+          <circle cx="224" cy="250" r="7"/><circle cx="286" cy="250" r="7"/><circle cx="348" cy="250" r="7"/>
+        </g>
+
+        <!-- wires -->
+        <path d="M224 130 C 224 95, 196 70, 193 46" fill="none" stroke="#e0384b" stroke-width="7" stroke-linecap="round"/>
+        <path d="M348 130 L 348 70" fill="none" stroke="#2f6fe0" stroke-width="7" stroke-linecap="round"/>
+        <path d="M286 160 C 380 160, 520 176, 735 176" fill="none" stroke="#e8b400" stroke-width="7" stroke-linecap="round"/>
+        <g fill="#333"><circle cx="224" cy="130" r="5"/><circle cx="193" cy="46" r="5"/><circle cx="348" cy="130" r="5"/><circle cx="348" cy="70" r="5"/><circle cx="286" cy="160" r="5"/></g>
+
+        <!-- callouts -->
+        <rect x="560" y="148" width="150" height="24" rx="6" fill="#e8b400"/>
+        <text x="635" y="165" text-anchor="middle" font-family="Outfit" font-weight="800" font-size="15" fill="#222">to Arduino D7 →</text>
+        <text x="440" y="222" font-family="Outfit" font-weight="600" font-size="15" fill="#4a463e">← each column of 5 holes</text>
+        <text x="440" y="242" font-family="Outfit" font-weight="600" font-size="15" fill="#4a463e">is joined inside the board</text>
+      </svg>
+    </div>
+
+    <ol class="steps">
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt">Push the DHT11 <b>straight into the top half</b> of the middle (row <b>e</b>, next to the middle gap). Each pin goes in a <b>different column</b>. Grid facing you.</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt">Read the labels on the sensor. Remember which column has <b>+</b>, <b>S</b> and <b>−</b>. (Yours may be in a different order than the picture.)</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt"><b>+ column</b><span class="arrow">→</span><span class="tag plus">top + rail</span> (short wire)</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt"><b>− column</b><span class="arrow">→</span><span class="tag minus">top − rail</span> (short wire)</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt"><b>S column</b><span class="arrow">→</span><span class="tag pin">D7</span></span></label></li>
+    </ol>
+    <div class="tip"><b>Why this works:</b> the 5 holes in each column (a–e) are joined inside the board. Put a wire in <b>any</b> free hole in the same column as a pin and it's connected to that pin. <b>Never put two sensor pins in the same column.</b></div>
+    <div class="tip"><b>Bare blue sensor with 4 legs (no little board)?</b> Push all 4 legs into 4 columns. Left to right (grid facing you): <b>VCC, DATA, unused, GND</b>. Then push a <b>10 kΩ resistor</b> across, with one leg in the VCC column and one leg in the DATA column. Nothing goes in the "unused" column.</div>
+  </section>
+
+  <!-- ================= 3. LCD ================= -->
+  <section class="part" id="lcd" data-part="lcd">
+    <div class="part-head"><div class="num">3</div><h2>Screen (LCD with 4-pin I2C board)</h2></div>
+    <p class="part-sub">Your screen has a small board on the back with <b>4 pins</b>. Only 4 wires!</p>
+    <ol class="steps">
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt">LCD <b>GND</b><span class="arrow">→</span><span class="tag minus">top − rail</span></span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt">LCD <b>VCC</b><span class="arrow">→</span><span class="tag plus">top + rail</span></span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt">LCD <b>SDA</b><span class="arrow">→</span><span class="tag pin">A4</span></span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt">LCD <b>SCL</b><span class="arrow">→</span><span class="tag pin">A5</span></span></label></li>
+    </ol>
+    <div class="tip"><b>Easiest way:</b> use <b>female-to-male</b> jumper wires. The female end slides onto the LCD pin, and the male end goes into the rail or Arduino.</div>
+    <div class="tip"><b>Can't see A4 / A5?</b> They're on the Arduino's analog row, next to A0–A3. (The SDA and SCL pins next to <b>AREF</b>, at the end of the digital row, are the same pins, so either spot works.)</div>
+    <div class="tip warn"><b>The code must use the I2C screen.</b> The old code was written for the 16-pin screen. It needs the <b>LiquidCrystal I2C</b> library (see Step 7). Contrast is now set with the <b>small blue knob</b> on the back of the LCD, not the joystick.</div>
+  </section>
+
+  <!-- ================= 4. FAN ================= -->
+  <section class="part" id="fan" data-part="fan">
+    <div class="part-head"><div class="num">4</div><h2>Fan Motor + ULN2003</h2></div>
+    <p class="part-sub">Use the <b>bottom</b> rails only. The motor's 2 wires can go either way round.</p>
+
+    <div class="tabs" role="tablist">
+      <button class="tab active" id="tab-board" data-tab="board" role="tab">I have the driver BOARD</button>
+      <button class="tab" id="tab-chip" data-tab="chip" role="tab">I have the bare CHIP</button>
+    </div>
+
+    <div class="tab-panel active" data-panel="board">
+      <p class="part-sub" style="margin-left:0">Board has 4 little LEDs and a white 5-hole socket.</p>
+      <ol class="steps">
+        <li class="step"><label><input type="checkbox" data-group="fan-board"><span class="box"></span><span class="txt">Board <b>IN1</b><span class="arrow">→</span><span class="tag pin">D9</span></span></label></li>
+        <li class="step"><label><input type="checkbox" data-group="fan-board"><span class="box"></span><span class="txt">Board <b>−</b><span class="arrow">→</span><span class="tag minus">bottom − rail</span></span></label></li>
+        <li class="step"><label><input type="checkbox" data-group="fan-board"><span class="box"></span><span class="txt">Board <b>+</b><span class="arrow">→</span><span class="tag plus">bottom + rail</span></span></label></li>
+        <li class="step"><label><input type="checkbox" data-group="fan-board"><span class="box"></span><span class="txt">Motor <b>wire 1</b><span class="arrow">→</span><span class="tag plus">bottom + rail</span></span></label></li>
+        <li class="step"><label><input type="checkbox" data-group="fan-board"><span class="box"></span><span class="txt">Motor <b>wire 2</b><span class="arrow">→</span>one hole of the <b>white socket</b> (you'll find the right hole after uploading, see the tip)</span></label></li>
+      </ol>
+      <div class="tip"><b>Finding the right hole:</b> after you upload the code, press the Arduino's <b>RESET</b> button. The motor should spin for ~1 second and LED <b>A</b> lights up. If it doesn't spin, move wire 2 to the next hole and press RESET again.</div>
+    </div>
+
+    <div class="tab-panel" data-panel="chip">
+      <p class="part-sub" style="margin-left:0">16 legs. Notch at the top. Pin 1 is top-left.</p>
+      <ol class="steps">
+        <li class="step"><label><input type="checkbox" data-group="fan-chip"><span class="box"></span><span class="txt">Chip pin <b>1</b><span class="arrow">→</span><span class="tag pin">D9</span></span></label></li>
+        <li class="step"><label><input type="checkbox" data-group="fan-chip"><span class="box"></span><span class="txt">Chip pin <b>8</b><span class="arrow">→</span><span class="tag minus">bottom − rail</span></span></label></li>
+        <li class="step"><label><input type="checkbox" data-group="fan-chip"><span class="box"></span><span class="txt">Chip pin <b>9</b><span class="arrow">→</span><span class="tag plus">bottom + rail</span></span></label></li>
+        <li class="step"><label><input type="checkbox" data-group="fan-chip"><span class="box"></span><span class="txt">Chip pin <b>16</b><span class="arrow">→</span>motor <b>wire 2</b></span></label></li>
+        <li class="step"><label><input type="checkbox" data-group="fan-chip"><span class="box"></span><span class="txt">Motor <b>wire 1</b><span class="arrow">→</span><span class="tag plus">bottom + rail</span></span></label></li>
+      </ol>
+    </div>
+
+    <div class="tip warn"><b>ULN2003 gets hot or the motor is weak?</b> Also connect <b>IN2</b> to <span class="tag pin">D9</span>, and <b>OUT2</b> (chip pin 15, or the next socket hole) to motor wire 2. Now two channels share the load.<br>The HW-095 isn't used.</div>
+  </section>
+
+  <!-- ================= 5. JOYSTICK ================= -->
+  <section class="part" id="joystick" data-part="joystick">
+    <div class="part-head"><div class="num">5</div><h2>Joystick (5 pins)</h2></div>
+    <p class="part-sub">5 wires.</p>
+    <ol class="steps">
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt">Joystick <b>GND</b><span class="arrow">→</span><span class="tag minus">top − rail</span></span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt">Joystick <b>+5V</b><span class="arrow">→</span><span class="tag plus">top + rail</span></span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt">Joystick <b>VRx</b><span class="arrow">→</span><span class="tag pin">A0</span></span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt">Joystick <b>VRy</b><span class="arrow">→</span><span class="tag pin">A1</span></span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt">Joystick <b>SW</b><span class="arrow">→</span><span class="tag pin">A2</span></span></label></li>
+    </ol>
+  </section>
+
+  <!-- ================= 6. TURN ON ================= -->
+  <section class="part" id="turnon" data-part="turnon">
+    <div class="part-head"><div class="num">6</div><h2>Turn On (order matters!)</h2></div>
+    <p class="part-sub">The HW-131 always goes first.</p>
+    <ol class="steps">
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt"><b>First:</b> plug the HW-131's USB cable into a <b>USB port</b> (laptop or phone charger).</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt">Press the HW-131's <b>power button</b>. Its LED lights up.</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt"><b>Then:</b> plug the Arduino into the laptop. (If it was already on, press <b>RESET</b>.)</span></label></li>
+    </ol>
+    <div class="tip warn"><b>Why?</b> If the Arduino starts first, the screen has no power yet and shows garbage. Fix: press RESET.</div>
+  </section>
+
+  <!-- ================= 7. UPLOAD ================= -->
+  <section class="part" id="upload" data-part="upload">
+    <div class="part-head"><div class="num">7</div><h2>Upload the Code</h2></div>
+    <p class="part-sub">In the Arduino IDE.</p>
+    <ol class="steps">
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt"><b>Tools → Manage Libraries</b>. Search <b>DHT sensor library</b>, pick the one <b>by Adafruit</b>, click <b>Install</b>, then <b>Install all</b>.</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt">Still in Manage Libraries: search <b>LiquidCrystal I2C</b>, pick the one <b>by Frank de Brabander</b>, click <b>Install</b>.</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt"><b>File → New</b>. Delete everything and paste the code.</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt"><b>Tools → Board → Arduino AVR Boards → Arduino Uno</b></span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt"><b>Tools → Port</b>: pick the one that says <b>Arduino Uno</b>.</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt">Click <b>Upload (→)</b>. Wait for <b>"Done uploading"</b>.</span></label></li>
+    </ol>
+    <div class="tip">Using the driver <b>board</b>? Now go back to Step 4 and find the right socket hole for motor wire 2.</div>
+  </section>
+
+  <!-- ================= 8. TEST ================= -->
+  <section class="part" id="test" data-part="test">
+    <div class="part-head"><div class="num">8</div><h2>Test (about 2 min)</h2></div>
+    <p class="part-sub">Tick each one when you see it work.</p>
+    <ol class="steps">
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt"><b>Start-up:</b> screen shows "WETBULB" with a filling bar, and the motor spins ~1 s.</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt"><b>After 2 s:</b> status screen, e.g. <code>*COOLING</code> / <code>H2O 0.6L</code> (or <code>~FREEAIR</code> in cold air).</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt"><b>Joystick left/right:</b> changes page (STATUS, AIR, WETBLB, WATER, CO2, FOCUS).</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt"><b>Joystick up/down</b> on the FOCUS page: the knob slides between CO2 and H2O.</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt"><b>Click the joystick:</b> shows <code>NO APP / CONNECT</code> (normal for now).</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt"><b>Text hard to read?</b> Turn the small <b>blue knob</b> on the back of the LCD with a tiny screwdriver until the letters are sharp.</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt"><b>Breathe on the sensor:</b> within ~10 s the numbers go up and the motor speeds up.</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt"><b>Tools → Serial Monitor</b>, set to <b>115200</b> and <b>Newline</b>. You see lines like <code>S,23.4,61</code> every 2 s.</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt">Type <code>L,*RUN NOW,~-24%H2O,200,380,50</code> and press Enter. Screen says <b>RUN NOW</b> and the motor runs.</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt">Type <code>L,WAIT 3h,~-24%H2O,0,410,50</code> and press Enter. Screen says <b>WAIT</b> and the motor stops.</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="box"></span><span class="txt"><b>Close the Serial Monitor</b> before you click "Connect rack" in the dashboard.</span></label></li>
+    </ol>
+  </section>
+
+  <!-- ================= HELP ================= -->
+  <section class="part" id="help">
+    <div class="part-head"><div class="num">?</div><h2>Something Wrong?</h2></div>
+    <p class="part-sub">Tap a problem to see the fix.</p>
+
+    <details><summary>Screen is blank or shows solid boxes</summary>
+      <div class="fix"><ol>
+        <li>Press <b>RESET</b> on the Arduino.</li>
+        <li>Turn the small <b>blue knob</b> on the back of the LCD slowly all the way one way, then the other. The text usually appears somewhere in the middle.</li>
+        <li>Check SDA is on <span class="tag pin">A4</span> and SCL is on <span class="tag pin">A5</span> (not swapped).</li>
+        <li>Still nothing? Your screen's address may be <code>0x3F</code> instead of <code>0x27</code>. Change it in the code and upload again.</li>
+      </ol></div>
+    </details>
+    <details><summary>Screen goes crazy when the motor starts</summary>
+      <div class="fix"><ol>
+        <li>Make sure the motor is only on the <b>bottom</b> rails.</li>
+        <li>If you have a small 0.1 µF capacitor, put it across the motor's 2 wires.</li>
+      </ol></div>
+    </details>
+    <details><summary>Backlight is off</summary>
+      <div class="fix"><ol>
+        <li>There's a small <b>jumper</b> on the end of the LCD's back board. Make sure it's pushed on.</li>
+        <li>Check GND and VCC go to the <b>top</b> rails and the HW-131 is on.</li>
+      </ol></div>
+    </details>
+    <details><summary>Screen says <code>SENSOR?</code> or <code>CHECK D7</code></summary>
+      <div class="fix"><ol>
+        <li>The sensor DATA wire isn't on D7. Move it.</li>
+        <li>Bare 4-pin sensor? It needs the 10 kΩ resistor.</li>
+      </ol></div>
+    </details>
+    <details><summary>Motor hums or twitches but won't spin</summary>
+      <div class="fix"><ol>
+        <li>At the top of the code, change <code>MIN_RUN_PWM</code> from 90 to 140.</li>
+        <li>Upload again.</li>
+      </ol></div>
+    </details>
+    <details><summary>Motor never spins</summary>
+      <div class="fix"><ol>
+        <li>Is the HW-131 on? (LED lit)</li>
+        <li>Are both jumpers on <b>5V</b>?</li>
+        <li>Is the top − rail joined to the bottom − rail, and is Arduino GND on the − rail?</li>
+        <li>Driver board: try motor wire 2 in a different socket hole.</li>
+      </ol></div>
+    </details>
+    <details><summary>Nothing works and the HW-131 LED is off</summary>
+      <div class="fix"><ol>
+        <li>Press the HW-131's power button.</li>
+        <li>The USB port may be too weak. Try a different USB port or a phone charger.</li>
+      </ol></div>
+    </details>
+    <details><summary>Joystick directions are backwards</summary>
+      <div class="fix"><ol>
+        <li>At the top of the code, set <code>FLIP_X</code>, <code>FLIP_Y</code> or <code>SWAP_XY</code> to <code>true</code>.</li>
+        <li>Upload again.</li>
+      </ol></div>
+    </details>
+  </section>
+
+  <button class="reset-btn" id="reset-btn">↺ Clear all ticks and start over</button>
+</main>
+
+<script>
+  const KEY = 'wetbulb-wiring-v3';
+  const allBoxes = [...document.querySelectorAll('.step input[type="checkbox"]')];
+  allBoxes.forEach((b, i) => b.dataset.idx = i);
+
+  let fanMode = 'board';
+  const saved = JSON.parse(localStorage.getItem(KEY) || '{}');
+  if (saved.fanMode) fanMode = saved.fanMode;
+  (saved.checked || []).forEach(i => { if (allBoxes[i]) allBoxes[i].checked = true; });
+
+  // Only count the fan steps for the tab the user picked
+  const counts = b => !b.dataset.group || b.dataset.group === 'fan-' + fanMode;
+
+  function save() {
+    localStorage.setItem(KEY, JSON.stringify({
+      fanMode,
+      checked: allBoxes.filter(b => b.checked).map(b => +b.dataset.idx)
+    }));
+  }
+
+  function update() {
+    const active = allBoxes.filter(counts);
+    const done = active.filter(b => b.checked).length;
+    const pct = active.length ? (done / active.length) * 100 : 0;
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-label').textContent = `${done} / ${active.length} done`;
+    document.getElementById('celebrate').classList.toggle('show', done === active.length && done > 0);
+
+    document.querySelectorAll('section.part[data-part]').forEach(sec => {
+      const boxes = [...sec.querySelectorAll('.step input')].filter(counts);
+      const complete = boxes.length > 0 && boxes.every(b => b.checked);
+      sec.classList.toggle('complete', complete);
+      const link = document.querySelector(`.nav a[data-part="${sec.dataset.part}"]`);
+      if (link) link.classList.toggle('complete', complete);
+    });
+  }
+
+  function setTab(mode) {
+    fanMode = mode;
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === mode));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.dataset.panel === mode));
+    save(); update();
+  }
+
+  document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => setTab(t.dataset.tab)));
+  allBoxes.forEach(b => b.addEventListener('change', () => { save(); update(); }));
+  document.getElementById('reset-btn').addEventListener('click', () => {
+    if (!confirm('Clear all ticks?')) return;
+    allBoxes.forEach(b => b.checked = false);
+    save(); update();
+    window.scrollTo({ top: 0 });
+  });
+
+  setTab(fanMode);
+</script>
+</body>
+</html>

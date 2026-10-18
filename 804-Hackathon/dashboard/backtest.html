@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wetbulb AI · 1,016-Day Virginia Historical Evidence & Pareto Trade-Off</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #030712;
+  --panel: rgba(8, 15, 30, 0.75);
+  --line: rgba(148, 163, 214, 0.14);
+  --water: #38bdf8;
+  --eco: #34d399;
+  --carbon: #a78bfa;
+  --muted: #94a3b8;
+  --sans: "IBM Plex Sans", sans-serif;
+  --mono: "JetBrains Mono", monospace;
+  --display: "Outfit", sans-serif;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: #f8fafc;
+  font-family: var(--sans);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+.ambient {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 40% 15%, rgba(167, 139, 250, 0.1), transparent 60%),
+              radial-gradient(circle at 75% 75%, rgba(56, 189, 248, 0.08), transparent 50%);
+  z-index: 0;
+}
+.wrap {
+  position: relative;
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 24px 20px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  z-index: 1;
+}
+
+header.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.brand h1 {
+  font: 800 1.6rem var(--display);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+.brand p {
+  margin: 2px 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.eco-tag {
+  font: 700 0.68rem var(--mono);
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(52, 211, 153, 0.18);
+  color: #6ee7b7;
+  border: 1px solid rgba(52, 211, 153, 0.35);
+}
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(6, 12, 28, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 5px 6px;
+  overflow-x: auto;
+  max-width: 100%;
+}
+.nav-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  color: var(--muted);
+  text-decoration: none;
+  font: 600 0.86rem var(--display);
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  white-space: nowrap;
+}
+.nav-tab:hover {
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.08);
+}
+.nav-tab.active {
+  color: #030712;
+  background: linear-gradient(135deg, #38bdf8, #34d399);
+  box-shadow: 0 4px 14px rgba(56, 189, 248, 0.4);
+  font-weight: 700;
+}
+
+.card {
+  border-radius: 20px;
+  padding: 22px;
+  background: var(--panel);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--line);
+  box-shadow: 0 16px 40px -15px rgba(0, 0, 0, 0.7);
+  transform-style: preserve-3d;
+  transition: transform 0.15s ease, border-color 0.2s ease;
+}
+.card:hover {
+  border-color: rgba(56, 189, 248, 0.35);
+}
+
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.stat b { font: 800 clamp(2.2rem, 3.6vw, 3.2rem)/1 var(--display); }
+.stat span { color: var(--muted); font-size: 0.86rem; line-height: 1.35; margin-top: 6px; display: block; }
+.stat .w { color: #7dd3fc; text-shadow: 0 0 25px rgba(56, 189, 248, 0.45); }
+.stat .g { color: #6ee7b7; text-shadow: 0 0 25px rgba(52, 211, 153, 0.45); }
+.stat .c { color: #c4b5fd; }
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+@media (max-width: 1050px) {
+  .charts-grid { grid-template-columns: 1fr; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+  .stats { grid-template-columns: 1fr; }
+}
+
+.mini { width: 100%; height: 240px; display: block; overflow: visible; }
+
+/* Historical Replay Section */
+.replay-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 20px;
+}
+@media (max-width: 850px) {
+  .replay-grid { grid-template-columns: 1fr; }
+}
+.day-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+  color: #e2e8f0;
+  font: 600 0.86rem var(--display);
+  cursor: pointer;
+  margin-bottom: 8px;
+  transition: all 0.15s ease;
+}
+.day-btn.active, .day-btn:hover {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+.day-btn small {
+  display: block;
+  font: 500 0.72rem var(--mono);
+  color: var(--muted);
+  margin-top: 2px;
+}
+.race-lane {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.race-lane.wb {
+  border-color: rgba(52, 211, 153, 0.4);
+  background: rgba(6, 78, 59, 0.15);
+}
+.tank-bar {
+  height: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.tank-fill {
+  height: 100%;
+  background: var(--water);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+.tank-fill.wb {
+  background: linear-gradient(90deg, #38bdf8, #34d399);
+}
+</style>
+</head>
+<body>
+<div class="ambient"></div>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 42 42" style="width:42px;height:42px;">
+        <defs>
+          <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#6ee7b7"/>
+            <stop offset="40%" stop-color="#38bdf8"/>
+            <stop offset="100%" stop-color="#818cf8"/>
+          </linearGradient>
+        </defs>
+        <ellipse cx="21" cy="36" rx="12" ry="3" fill="none" stroke="#38bdf8" stroke-width="1.3"/>
+        <path d="M21 3C17 10 10 16 10 23a11 11 0 0 0 22 0C32 16 25 10 21 3z" fill="url(#lg)"/>
+      </svg>
+      <div>
+        <h1>Wetbulb AI</h1>
+        <p>Virginia 1,016-Day Empirical Backtest <span class="eco-tag">📊 PJM & ASHBURN DATA</span></p>
+      </div>
+    </div>
+  </header>
+
+  <!-- Multi-Page Site Navigation -->
+  <nav class="site-nav" aria-label="Main Site Navigation">
+    <a href="index.html" class="nav-tab">⚡ Live Dispatcher</a>
+    <a href="impact.html" class="nav-tab">🎮 Public Impact (Neal.fun)</a>
+    <a href="backtest.html" class="nav-tab active">📊 1,016-Day Evidence</a>
+    <a href="calculator.html" class="nav-tab">🧮 What-If ROI Calculator</a>
+    <a href="methodology.html" class="nav-tab">📖 Methodology</a>
+  </nav>
+
+  <div style="margin-top:6px;">
+    <h2 style="font:800 clamp(1.8rem, 3.2vw, 2.5rem)/1.1 var(--display);letter-spacing:-0.03em;margin:0;">
+      What 1,016 Real Days of Virginia Data Prove
+    </h2>
+    <p style="color:var(--muted);max-width:68ch;margin:6px 0 0;font-size:0.95rem;line-height:1.5;">
+      Every single hour of PJM's fuel mix cross-matched with Ashburn's hourly thermodynamics from 2024 through late 2026, backtested against real compute schedules.
+    </p>
+  </div>
+
+  <section class="stats">
+    <div class="card stat">
+      <b class="w">24.3%</b>
+      <span>on-site cooling water saved by Wetbulb algorithm</span>
+    </div>
+    <div class="card stat">
+      <b class="c">3.0%</b>
+      <span>saved by carbon-only scheduling (today's standard)</span>
+    </div>
+    <div class="card stat">
+      <b class="g">191M</b>
+      <span>gallons of cooling water saved annually at VA Alley scale</span>
+    </div>
+    <div class="card stat">
+      <b style="color:#fcd34d;">66.0%</b>
+      <span>of days, cleanest hours & least-thirsty hours conflict</span>
+    </div>
+  </section>
+
+  <!-- Charts Row: Water Consumption by Strategy emerging from right side -->
+  <section class="charts-grid">
+    <article class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <h3 style="margin:0;font:800 1.15rem var(--display);">Water Consumption by Strategy</h3>
+        <span style="font:700 0.7rem var(--mono);color:var(--water);">RIGHT BASELINE</span>
+      </div>
+      <svg class="mini" id="barsChart" viewBox="0 0 400 230" role="img" aria-label="Water per job by policy"></svg>
+    </article>
+
+    <article class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <h3 style="margin:0;font:800 1.15rem var(--display);">Ashburn Summer Diurnal Cycle</h3>
+        <span style="font:700 0.7rem var(--mono);color:#c4b5fd;">HOURLY RHYTHM</span>
+      </div>
+      <svg class="mini" id="rhythmChart" viewBox="0 0 400 230" role="img" aria-label="Summer daily rhythm of carbon and water"></svg>
+    </article>
+
+    <article class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <h3 style="margin:0;font:800 1.15rem var(--display);">The Pareto Trade-off Frontier</h3>
+        <span style="font:700 0.7rem var(--mono);color:var(--eco);">WATER VS CARBON</span>
+      </div>
+      <svg class="mini" id="tradeChart" viewBox="0 0 400 230" role="img" aria-label="Trade-off between water and carbon"></svg>
+    </article>
+  </section>
+
+  <!-- Historical Replay Race Simulation -->
+  <article class="card">
+    <div style="margin-bottom:16px;">
+      <h3 style="margin:0;font:800 1.3rem var(--display);">Virginia Historical Replay: Run Now vs. Wetbulb AI</h3>
+      <p style="margin:4px 0 0;color:var(--muted);font-size:0.86rem;">
+        Select an extreme weather day from Virginia history to see how thermodynamic dispatch outperforms traditional scheduling.
+      </p>
+    </div>
+
+    <div class="replay-grid">
+      <div>
+        <button class="day-btn active" data-day="0">The summer day where waiting saved most<small>June 30, 2024 · 3,690 L saved</small></button>
+        <button class="day-btn" data-day="1">The most humid July day in Ashburn<small>July 2, 2026 · Night shift optimal</small></button>
+        <button class="day-btn" data-day="2">The coldest winter day<small>January 22, 2025 · 100% Free Economizer</small></button>
+        <button class="day-btn" data-day="3">The day carbon and water disagreed most<small>July 3, 2026 · Peak summer conflict</small></button>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="race-lane">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <b style="font:700 0.95rem var(--display);">Standard Policy (Run Now at 9 AM)</b>
+            <span style="font:700 0.72rem var(--mono);color:#f87171;">BASELINE</span>
+          </div>
+          <div style="display:flex;gap:20px;font-size:0.88rem;">
+            <div><b id="nLiters" style="font:800 1.25rem var(--mono);color:#7dd3fc;">8,988 L</b> <span style="color:var(--muted);">cooling water</span></div>
+            <div><b id="nKg" style="font:800 1.25rem var(--mono);color:#c4b5fd;">1,030 kg</b> <span style="color:var(--muted);">grid CO₂</span></div>
+          </div>
+          <div class="tank-bar"><div class="tank-fill" id="nBar" style="width:100%;"></div></div>
+        </div>
+
+        <div class="race-lane wb">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <b style="font:700 0.95rem var(--display);color:#6ee7b7;">With Wetbulb Climate AI Dispatch</b>
+            <span style="font:700 0.72rem var(--mono);color:#34d399;" id="wSavedPct">−41.1% WATER</span>
+          </div>
+          <div style="display:flex;gap:20px;font-size:0.88rem;">
+            <div><b id="wLiters" style="font:800 1.25rem var(--mono);color:#6ee7b7;">5,298 L</b> <span style="color:var(--muted);">cooling water</span></div>
+            <div><b id="wKg" style="font:800 1.25rem var(--mono);color:#c4b5fd;">906 kg</b> <span style="color:var(--muted);">grid CO₂</span></div>
+          </div>
+          <div class="tank-bar"><div class="tank-fill wb" id="wBar" style="width:58.9%;"></div></div>
+        </div>
+      </div>
+    </div>
+  </article>
+</div>
+
+<script src="data.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const sans = 'font-family="IBM Plex Sans, sans-serif"', mono = 'font-family="JetBrains Mono, monospace"';
+
+function initCharts() {
+  const r = window.WETBULB_DATA ? window.WETBULB_DATA.results : null;
+  if (!r) return;
+  const bt = Object.fromEntries(r.backtest.map(b => [b.policy, b]));
+
+  // 1. Water Consumption by Strategy - Emerging from Right-Hand Side
+  const pol = ["Run now", "Carbon only", "Water only", "Wetbulb"];
+  const col = ["#94a3b8", "#a78bfa", "#38bdf8", "#34d399"];
+  const mx = Math.max(...pol.map(p => bt[p].onsite_liters));
+  
+  let h = `<defs>
+    <linearGradient id="bgR0" x1="1" y1="0" x2="0" y2="0"><stop offset="0%" stop-color="#94a3b8"/><stop offset="100%" stop-color="#64748b"/></linearGradient>
+    <linearGradient id="bgR1" x1="1" y1="0" x2="0" y2="0"><stop offset="0%" stop-color="#c4b5fd"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient>
+    <linearGradient id="bgR2" x1="1" y1="0" x2="0" y2="0"><stop offset="0%" stop-color="#7dd3fc"/><stop offset="100%" stop-color="#0284c7"/></linearGradient>
+    <linearGradient id="bgR3" x1="1" y1="0" x2="0" y2="0"><stop offset="0%" stop-color="#6ee7b7"/><stop offset="100%" stop-color="#059669"/></linearGradient>
+  </defs>
+  <line x1="382" y1="14" x2="382" y2="198" stroke="rgba(56, 189, 248, 0.45)" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="382" cy="14" r="3" fill="#38bdf8"/>
+  <circle cx="382" cy="198" r="3" fill="#38bdf8"/>
+  <text x="382" y="8" text-anchor="end" fill="#94a3b8" font-size="9.5" ${mono}>RIGHT BASELINE (0 L)</text>`;
+
+  pol.forEach((p, i) => {
+    const y = 18 + i * 46;
+    const maxBarW = 205;
+    const w = maxBarW * bt[p].onsite_liters / mx;
+    const barX = 382 - w;
+    const isWb = p === "Wetbulb";
+
+    h += `<g class="hbar-group" style="cursor:pointer;" data-p="${p}">
+      <text x="10" y="${y + 14}" fill="#f1f5f9" font-size="12.5" font-weight="${isWb ? '700' : '500'}" ${sans}>${p}</text>
+      ${isWb ? `<rect x="74" y="${y + 2}" width="54" height="15" rx="4" fill="rgba(52,211,153,0.18)" stroke="rgba(52,211,153,0.4)"/><text x="101" y="${y + 13}" text-anchor="middle" fill="#34d399" font-size="9" font-weight="700" ${mono}>−24.3%</text>` : ''}
+      <rect x="${barX}" y="${y}" width="${w}" height="19" rx="9.5" fill="url(#bgR${i})" opacity="${isWb ? 1 : 0.85}"/>
+      <text x="${barX - 8}" y="${y + 14}" fill="${col[i]}" font-size="12" font-weight="700" text-anchor="end" ${mono}>${Math.round(bt[p].onsite_liters).toLocaleString()} L</text>
+    </g>`;
+  });
+  $("barsChart").innerHTML = h + `<text x="382" y="220" text-anchor="end" fill="#8493b8" font-size="10.5" ${sans}>← Horizontal bars emerge from right-side baseline · cooling tower L/4h</text>`;
+
+  // 2. Diurnal Cycle
+  const profile = window.WETBULB_DATA.profile;
+  const hrs = [...Array(24).keys()];
+  const avg = a => a.reduce((s, v) => s + v, 0) / a.length;
+  const sm = k => hrs.map(hh => avg([6, 7, 8].map(m => profile.month_hour[`${m}-${hh}`][k])));
+  const cI = sm("ci"), uI = sm("wue");
+  const cLo = Math.min(...cI) * 0.97, cHi = Math.max(...cI) * 1.03, uHi = Math.max(...uI) * 1.15;
+  const X = i => 12 + i * 376 / 23, Yc = v => 185 - (v - cLo) / (cHi - cLo) * 155, Yu = v => 185 - v / uHi * 155;
+  const line = (a, y) => a.map((v, i) => `${i ? "L" : "M"}${X(i)},${y(v)}`).join("");
+  const cMin = cI.indexOf(Math.min(...cI)), uMin = uI.indexOf(Math.min(...uI));
+
+  $("rhythmChart").innerHTML = `<defs>
+      <linearGradient id="ra" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#38bdf8" stop-opacity=".35"/>
+        <stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <path d="${line(uI, Yu)} L${X(23)},185 L${X(0)},185 Z" fill="url(#ra)"/>
+    <path d="${line(uI, Yu)}" stroke="#38bdf8" stroke-width="2.8" fill="none"/>
+    <path d="${line(cI, Yc)}" stroke="#a78bfa" stroke-width="2.8" fill="none"/>
+    <circle cx="${X(uMin)}" cy="${Yu(uI[uMin])}" r="5" fill="#38bdf8"/>
+    <text x="${X(uMin)}" y="${Yu(uI[uMin]) - 12}" fill="#7dd3fc" font-size="11" text-anchor="middle" ${mono}>least water ${uMin}h</text>
+    <circle cx="${X(cMin)}" cy="${Yc(cI[cMin])}" r="5" fill="#a78bfa"/>
+    <text x="${X(cMin)}" y="${Yc(cI[cMin]) + 20}" fill="#c4b5fd" font-size="11" text-anchor="middle" ${mono}>cleanest ${cMin}h</text>
+    <text x="0" y="224" fill="#8493b8" font-size="11" ${sans}>Summer hourly average · purple = CO₂, blue = cooling water</text>`;
+
+  // 3. Trade-off Pareto Frontier
+  const tr = r.tradeoff, xs = tr.map(t => t.co2_saved_pct), ys = tr.map(t => t.water_saved_pct);
+  const x0 = Math.min(...xs, 0), x1 = Math.max(...xs), y1 = Math.max(...ys);
+  const TX = v => 34 + (v - x0) / (x1 - x0 || 1) * 330, TY = v => 180 - v / (y1 || 1) * 155;
+  const mid = tr.find(t => Math.abs(t.w_carbon - 0.5) < 1e-6) || tr[5];
+
+  $("tradeChart").innerHTML = `<defs>
+      <linearGradient id="tg" x1="0" x2="1">
+        <stop offset="0%" stop-color="#38bdf8"/>
+        <stop offset="50%" stop-color="#34d399"/>
+        <stop offset="100%" stop-color="#a78bfa"/>
+      </linearGradient>
+    </defs>
+    <line x1="34" y1="180" x2="370" y2="180" stroke="rgba(148,163,214,.18)"/>
+    <line x1="34" y1="15" x2="34" y2="180" stroke="rgba(148,163,214,.18)"/>
+    <path d="${tr.map((t, i) => `${i ? "L" : "M"}${TX(t.co2_saved_pct)},${TY(t.water_saved_pct)}`).join("")}" stroke="url(#tg)" stroke-width="3" fill="none"/>
+    ${tr.map(t => `<circle cx="${TX(t.co2_saved_pct)}" cy="${TY(t.water_saved_pct)}" r="${t === mid ? 7 : 4}" fill="${t === mid ? '#34d399' : '#cbd5e1'}"/>`).join("")}
+    <text x="${TX(mid.co2_saved_pct) - 10}" y="${TY(mid.water_saved_pct) - 12}" fill="#6ee7b7" font-size="11.5" text-anchor="end" ${mono}>Wetbulb (50/50)</text>
+    <text x="200" y="204" fill="#8493b8" font-size="11" text-anchor="middle" ${sans}>% CO₂ emissions reduced →</text>
+    <text x="0" y="224" fill="#8493b8" font-size="11" ${sans}>Interactive Pareto frontier: balancing water and carbon</text>`;
+}
+
+// Replay Day Selector
+const replayDays = [
+  { nL: 8988, nKg: 1030, wL: 5298, wKg: 906 },
+  { nL: 8683, nKg: 1062, wL: 8412, wKg: 1068 },
+  { nL: 4200, nKg: 1145, wL: 4133, wKg: 1087 },
+  { nL: 8729, nKg: 1041, wL: 8263, wKg: 1033 }
+];
+
+document.querySelectorAll(".day-btn").forEach((btn, idx) => {
+  btn.onclick = () => {
+    document.querySelectorAll(".day-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    const d = replayDays[idx];
+    $("nLiters").textContent = d.nL.toLocaleString() + " L";
+    $("nKg").textContent = d.nKg.toLocaleString() + " kg";
+    $("wLiters").textContent = d.wL.toLocaleString() + " L";
+    $("wKg").textContent = d.wKg.toLocaleString() + " kg";
+    const pct = ((d.nL - d.wL) / d.nL * 100).toFixed(1);
+    $("wSavedPct").textContent = `−${pct}% WATER`;
+    $("wBar").style.width = (d.wL / d.nL * 100) + "%";
+  };
+});
+
+// 3D Card Tilt Mouse Interaction
+document.querySelectorAll(".card").forEach(card => {
+  card.addEventListener("pointermove", e => {
+    const r = card.getBoundingClientRect();
+    const x = e.clientX - r.left, y = e.clientY - r.top;
+    const cx = r.width / 2, cy = r.height / 2;
+    const tiltX = (y - cy) / cy * -3.5;
+    const tiltY = (x - cx) / cx * 3.5;
+    card.style.transform = `perspective(1000px) rotateX(${tiltX.toFixed(2)}deg) rotateY(${tiltY.toFixed(2)}deg) translateZ(2px)`;
+  });
+  card.addEventListener("pointerleave", () => {
+    card.style.transform = "";
+  });
+});
+
+initCharts();
+</script>
+</body>
+</html>

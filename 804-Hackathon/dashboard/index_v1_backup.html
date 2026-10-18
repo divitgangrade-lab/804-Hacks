@@ -1,0 +1,783 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wetbulb</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: projector-first dashboard. Decision + live air on top, the 24 h timeline in the middle,
+   replay race and rack display below, evidence at the bottom. */
+:root {
+  --bg: #0a1020;
+  --panel: #111a2e;
+  --panel-2: #16223b;
+  --line: #24324f;
+  --ink: #e8eef8;
+  --muted: #8d9bb5;
+  --water: #4cc2ff;
+  --water-soft: rgba(76, 194, 255, 0.14);
+  --carbon: #b4bccb;
+  --carbon-soft: rgba(180, 188, 203, 0.12);
+  --pick: #f2b84b;
+  --pick-soft: rgba(242, 184, 75, 0.16);
+  --run: #4ade80;
+  --warn: #ff7a59;
+  --lcd: #9cc25a;
+  --lcd-ink: #142008;
+  --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", Helvetica, Arial, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--body); }
+body { padding: 18px max(16px, 2vw) 48px; }
+.wrap { max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+h1, h2, h3 { font-family: var(--display); margin: 0; line-height: 1.1; }
+.label { font: 600 0.72rem/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.num { font-variant-numeric: tabular-nums; }
+button, select, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--water); outline-offset: 2px; }
+
+/* top bar */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand h1 { font-size: 1.9rem; letter-spacing: -0.02em; }
+.brand small { color: var(--muted); font-size: 0.9rem; }
+.drop { width: 30px; height: 30px; }
+.controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.pill { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); font-size: 0.85rem; white-space: nowrap; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
+.dot.on { background: var(--run); box-shadow: 0 0 10px var(--run); }
+.btn { padding: 8px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel-2); font-weight: 600; }
+.btn:hover { border-color: var(--water); }
+.btn.primary { background: var(--water); color: #04121f; border-color: var(--water); }
+.btn.gold { background: var(--pick); color: #1f1400; border-color: var(--pick); }
+
+/* cards */
+.grid-top { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; transition: box-shadow 0.25s, border-color 0.25s; min-width: 0; }
+.flash { border-color: var(--pick) !important; box-shadow: 0 0 0 3px var(--pick-soft); border-radius: 12px; }
+
+.decision-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.decision { font-family: var(--display); font-size: clamp(2rem, 4.2vw, 3.4rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.05; }
+.decision .when { color: var(--pick); }
+.decision.run .when { color: var(--run); }
+.sub { color: var(--muted); font-size: 1rem; }
+.chips { display: flex; gap: 10px; flex-wrap: wrap; }
+.chip { display: flex; flex-direction: column; gap: 2px; padding: 10px 14px; border-radius: 12px; background: var(--panel-2); border: 1px solid var(--line); min-width: 150px; }
+.chip b { font: 700 1.6rem/1.1 var(--display); }
+.chip.water b { color: var(--water); }
+.chip.carbon b { color: var(--carbon); }
+.chip.gold b { color: var(--pick); }
+.chip span { color: var(--muted); font-size: 0.82rem; }
+
+.air-big { font: 700 2.6rem/1 var(--display); }
+.air-big small { font-size: 1rem; color: var(--muted); font-weight: 500; }
+.air-rows { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.air-rows div { background: var(--panel-2); border-radius: 10px; padding: 8px 10px; }
+.air-rows b { display: block; font: 700 1.15rem var(--display); }
+.air-rows span { color: var(--muted); font-size: 0.78rem; }
+.spark { width: 100%; height: 54px; }
+.demo-box { display: none; flex-direction: column; gap: 6px; border-top: 1px dashed var(--line); padding-top: 10px; }
+.demo-box.show { display: flex; }
+.demo-box label { display: flex; justify-content: space-between; font-size: 0.82rem; color: var(--muted); }
+input[type=range] { width: 100%; accent-color: var(--water); }
+
+/* timeline */
+.timeline-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 0.85rem; color: var(--muted); }
+.legend i { display: inline-block; width: 18px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+.chart-box { overflow-x: auto; }
+#chart { width: 100%; min-width: 720px; height: 300px; display: block; }
+.focus { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; }
+.focus .end { font-weight: 600; }
+#weight { accent-color: var(--pick); height: 26px; }
+.focus-note { color: var(--muted); font-size: 0.85rem; text-align: center; }
+
+/* replay + rack */
+.grid-mid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+.replay-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+select { background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+.clock { font: 700 1.6rem var(--mono); color: var(--pick); margin-left: auto; }
+.race { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.lane { background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+.lane.wb { border-color: rgba(242, 184, 75, 0.5); }
+.lane h3 { font-size: 1.05rem; display: flex; justify-content: space-between; }
+.lane .state { font: 600 0.75rem var(--mono); padding: 3px 8px; border-radius: 999px; background: var(--carbon-soft); color: var(--muted); }
+.lane .state.on { background: rgba(74, 222, 128, 0.15); color: var(--run); }
+.lane .vals { display: flex; gap: 18px; }
+.lane .vals b { font: 700 1.5rem var(--display); }
+.lane .vals .w { color: var(--water); }
+.lane .vals span { display: block; color: var(--muted); font-size: 0.78rem; }
+.verdict { font: 600 1.05rem var(--display); color: var(--pick); min-height: 1.4em; }
+
+.lcd-wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.lcd { background: var(--lcd); border: 10px solid #22301f; border-radius: 10px; padding: 10px; display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; width: 100%; max-width: 330px; box-shadow: inset 0 0 18px rgba(0,0,0,0.25); }
+.lcd span { background: rgba(0,0,0,0.07); color: var(--lcd-ink); font: 700 1.5rem/1.6 var(--mono); text-align: center; border-radius: 3px; }
+.fan-ind { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 0.9rem; }
+.fan-svg { width: 34px; height: 34px; }
+.fan-svg.spin { animation: spin var(--spin, 1s) linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.pages { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.pages span { font: 600 0.7rem var(--mono); padding: 3px 7px; border-radius: 6px; border: 1px solid var(--line); color: var(--muted); }
+.pages span.on { border-color: var(--pick); color: var(--pick); }
+
+/* evidence */
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.stat { background: var(--panel-2); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 4px; }
+.stat b { font: 700 2rem/1.05 var(--display); }
+.stat span { color: var(--muted); font-size: 0.85rem; }
+.figs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.figs img { width: 100%; height: 230px; object-fit: contain; border-radius: 10px; background: #fff; padding: 6px; }
+.sources { color: var(--muted); font-size: 0.8rem; }
+
+.toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--panel-2); border: 1px solid var(--line); padding: 10px 16px; border-radius: 10px; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+.toast.show { opacity: 1; }
+
+@media (max-width: 900px) {
+  .grid-top, .grid-mid, .race { grid-template-columns: 1fr; }
+  .stats, .figs { grid-template-columns: 1fr 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { .fan-svg.spin { animation: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <svg class="drop" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C9 7 5 10.5 5 15a7 7 0 0 0 14 0c0-4.5-4-8-7-13z" fill="#4cc2ff"/><path d="M9 15.5a3 3 0 0 0 3 3" stroke="#0a1020" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>
+      <div><h1>Wetbulb</h1><small>Run Virginia's AI jobs when they cost the least water and carbon</small></div>
+    </div>
+    <div class="controls">
+      <span class="pill"><span class="dot" id="linkDot"></span><span id="linkText">Rack not connected</span></span>
+      <span class="pill" id="modePill">Live forecast · Ashburn, VA</span>
+      <button class="btn primary" id="connectBtn">Connect rack</button>
+      <button class="btn" id="demoBtn">Demo sensor</button>
+    </div>
+  </header>
+
+  <section class="grid-top">
+    <article class="card" id="cardDecision">
+      <div class="decision-head">
+        <span class="label" id="decisionLabel">Next 24 hours · a 4-hour AI job at 500 kW</span>
+        <span class="label" id="decisionTime"></span>
+      </div>
+      <div class="decision" id="decision">Loading…</div>
+      <div class="sub" id="decisionSub"></div>
+      <div class="chips">
+        <div class="chip water"><b class="num" id="chipOnsite">–</b><span>on-site cooling water</span></div>
+        <div class="chip water"><b class="num" id="chipWater">–</b><span>total water (incl. power plants)</span></div>
+        <div class="chip carbon"><b class="num" id="chipCo2">–</b><span>CO₂</span></div>
+        <div class="chip gold"><b class="num" id="chipLiters">–</b><span>liters saved on this job</span></div>
+      </div>
+    </article>
+
+    <article class="card" id="cardAir">
+      <span class="label">Cooling tower air intake · <span id="airSource">forecast</span></span>
+      <div class="air-big num"><span id="airTwb">–</span><small> °C wet-bulb</small></div>
+      <div class="air-rows">
+        <div><b class="num" id="airTemp">–</b><span>air temperature</span></div>
+        <div><b class="num" id="airRh">–</b><span>humidity</span></div>
+        <div><b class="num" id="airWue" style="color:var(--water)">–</b><span>cooling water now</span></div>
+        <div><b class="num" id="airCo2">–</b><span>grid carbon now</span></div>
+      </div>
+      <svg class="spark" id="spark" viewBox="0 0 300 54" preserveAspectRatio="none" aria-label="Wet-bulb over the last minutes"></svg>
+      <div class="demo-box" id="demoBox">
+        <label>Air temperature <span id="dTv">22 °C</span></label>
+        <input type="range" id="dT" min="-5" max="38" step="0.5" value="22">
+        <label>Humidity <span id="dHv">45%</span></label>
+        <input type="range" id="dH" min="10" max="100" step="1" value="45">
+      </div>
+    </article>
+  </section>
+
+  <section class="card" id="cardTimeline">
+    <div class="timeline-head">
+      <h2 id="timelineTitle">The next 24 hours</h2>
+      <div class="legend">
+        <span><i style="background:var(--carbon)"></i>Grid carbon, g/kWh (left)</span>
+        <span><i style="background:var(--water)"></i>Cooling water, L/kWh (right)</span>
+        <span><i style="background:rgba(180,188,203,.35);height:10px"></i>Run now</span>
+        <span><i style="background:rgba(242,184,75,.55);height:10px"></i>Wetbulb's pick</span>
+      </div>
+    </div>
+    <div class="chart-box"><svg id="chart" viewBox="0 0 1000 300" preserveAspectRatio="none" role="img" aria-label="24 hour carbon and water timeline"></svg></div>
+    <div class="focus" id="focusRow">
+      <span class="end" style="color:var(--carbon)">Carbon matters most</span>
+      <input type="range" id="weight" min="0" max="100" step="10" value="50" aria-label="Carbon versus water priority">
+      <span class="end" style="color:var(--water)">Water matters most</span>
+    </div>
+    <div class="focus-note" id="focusNote">Equal weight · move the slider or the rack's joystick</div>
+  </section>
+
+  <section class="grid-mid">
+    <article class="card" id="cardReplay">
+      <div class="replay-controls">
+        <h2>Replay a real day</h2>
+        <select id="daySelect" aria-label="Day to replay"></select>
+        <button class="btn gold" id="playBtn">▶ Play</button>
+        <button class="btn" id="liveBtn">Back to live</button>
+        <span class="clock num" id="clock">--:--</span>
+      </div>
+      <div class="sub" id="dayNote">A job is submitted at 9 AM and must finish within 24 hours. 24 real hours play in 30 seconds.</div>
+      <div class="race">
+        <div class="lane">
+          <h3>Normal data center <span class="state" id="stNormal">waiting</span></h3>
+          <div class="vals">
+            <div><b class="num w" id="nOnsite">0 L</b><span>cooling water</span></div>
+            <div><b class="num" id="nKg">0 kg</b><span>CO₂</span></div>
+          </div>
+        </div>
+        <div class="lane wb">
+          <h3>With Wetbulb <span class="state" id="stWb">waiting</span></h3>
+          <div class="vals">
+            <div><b class="num w" id="wOnsite">0 L</b><span>cooling water</span></div>
+            <div><b class="num" id="wKg">0 kg</b><span>CO₂</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="verdict" id="raceVerdict"></div>
+    </article>
+
+    <article class="card" id="cardRack">
+      <span class="label">Rack display (mirrors the real LCD)</span>
+      <div class="lcd-wrap">
+        <div class="lcd" id="lcd"></div>
+        <div class="fan-ind"><svg class="fan-svg" id="fanSvg" viewBox="0 0 24 24" aria-hidden="true"><g fill="#4cc2ff"><path d="M12 12c0-4 1-8 4-8s2 5-4 8z"/><path d="M12 12c4 0 8 1 8 4s-5 2-8-4z"/><path d="M12 12c0 4-1 8-4 8s-2-5 4-8z"/><path d="M12 12c-4 0-8-1-8-4s5-2 8 4z"/></g><circle cx="12" cy="12" r="1.8" fill="#0a1020"/></svg><span id="fanText">Cooling fan off</span></div>
+        <div class="pages" id="pages"></div>
+      </div>
+    </article>
+  </section>
+
+  <section class="card" id="cardEvidence">
+    <h2>What 1,009 real days of Virginia data show</h2>
+    <div class="stats">
+      <div class="stat"><b class="num" id="sOnsite" style="color:var(--water)">–</b><span>on-site cooling water saved by Wetbulb</span></div>
+      <div class="stat"><b class="num" id="sCarbonOnly">–</b><span>saved by carbon-only scheduling (today's approach)</span></div>
+      <div class="stat"><b class="num" id="sGallons" style="color:var(--pick)">–</b><span>gallons of cooling water a year at Virginia scale</span></div>
+      <div class="stat"><b class="num" id="sConflict">–</b><span>of days, the cleanest and least-thirsty hours differ</span></div>
+    </div>
+    <div class="figs">
+      <img src="../outputs/2_daily_rhythm.png" alt="Daily rhythm of carbon and water by season">
+      <img src="../outputs/3_backtest.png" alt="Backtest: CO2 and water per job for four policies">
+      <img src="../outputs/4_tradeoff.png" alt="Trade-off between carbon saved and water saved">
+    </div>
+    <div class="sources" id="sources"></div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// =====================================================================
+// constants (same model as the Kaggle analysis)
+// =====================================================================
+const JOB_H = 4, JOB_KW = 500;
+const LAT = 39.04, LON = -77.49;
+const PAGE_NAMES = ["STATUS", "AIR", "WETBLB", "WATER", "CO2", "FOCUS"];
+const PAGE_CARDS = ["cardDecision", "cardAir", "cardAir", "cardTimeline", "cardTimeline", "focusRow"];
+const REPLAY_MS = 30000;
+
+const S = {
+  results: null, profile: null, replay: [],
+  forecast: null,                 // [{label, hour, temp, rh, twb}] next 24 h
+  sensor: null,                   // {temp, rh, twb, at}
+  demo: false,
+  w: 0.5,                         // carbon weight
+  mode: "live",
+  dayIdx: 0, rt: 0, playing: false, timer: null,
+  writer: null, lastSent: "", lastSentAt: 0,
+  lcd: ["~WETBULB", "        "], fan: 0, page: 0,
+  sparkVals: [],
+};
+
+// =====================================================================
+// math
+// =====================================================================
+const avg = a => a.reduce((s, v) => s + v, 0) / a.length;
+const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+function stull(t, rh) {
+  rh = clamp(rh, 1, 100);
+  return t * Math.atan(0.151977 * Math.sqrt(rh + 8.313659)) + Math.atan(t + rh) - Math.atan(rh - 1.676331)
+    + 0.00391838 * Math.pow(rh, 1.5) * Math.atan(0.023101 * rh) - 4.686035;
+}
+const wue = twb => clamp(0.15 * (twb - 10), 0, 3);
+function bestStart(score) {
+  let best = 0, bv = Infinity;
+  for (let s = 0; s <= score.length - JOB_H; s++) {
+    let m = 0;
+    for (let k = 0; k < JOB_H; k++) m += score[s + k];
+    if (m < bv) { bv = m; best = s; }
+  }
+  return best;
+}
+function choose(C, W, w) {
+  const mc = avg(C), mw = avg(W);
+  return bestStart(C.map((c, i) => w * c / mc + (1 - w) * W[i] / mw));
+}
+const win = (arr, s) => avg(arr.slice(s, s + JOB_H));
+const pctSaved = (base, val) => base > 0 ? 100 * (1 - val / base) : 0;
+const fmtPct = p => (p >= 0 ? "−" : "+") + Math.abs(p).toFixed(0) + "%";
+const fanFor = water => water <= 0 ? 110 : Math.round(90 + 165 * Math.min(water, 3) / 3);
+
+// =====================================================================
+// data loading
+// =====================================================================
+async function loadJSON(path) {
+  const r = await fetch(path, { cache: "no-store" });
+  if (!r.ok) throw new Error(path + " " + r.status);
+  return r.json();
+}
+async function loadData() {
+  try {
+    [S.results, S.profile, S.replay] = await Promise.all([
+      loadJSON("../outputs/results.json"), loadJSON("../outputs/wetbulb_profile.json"), loadJSON("../outputs/replay_days.json")]);
+  } catch (e) {
+    document.getElementById("decision").textContent = "Data not found";
+    document.getElementById("decisionSub").textContent =
+      "Start a server in the project folder: python3 -m http.server 8000, then open http://localhost:8000/dashboard/";
+    throw e;
+  }
+}
+async function loadForecast() {
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
+    "&hourly=temperature_2m,relative_humidity_2m,wet_bulb_temperature_2m&forecast_days=2&timezone=America%2FNew_York";
+  try {
+    const js = await (await fetch(url)).json();
+    const nowLocal = new Date(Date.now() + js.utc_offset_seconds * 1000).toISOString().slice(0, 13) + ":00";
+    let i0 = js.hourly.time.indexOf(nowLocal);
+    if (i0 < 0) i0 = 0;
+    S.forecast = js.hourly.time.slice(i0, i0 + 24).map((t, k) => {
+      const i = i0 + k, temp = js.hourly.temperature_2m[i], rh = js.hourly.relative_humidity_2m[i];
+      const twb = js.hourly.wet_bulb_temperature_2m[i] ?? stull(temp, rh);
+      return { hour: +t.slice(11, 13), label: hourLabel(+t.slice(11, 13)), temp, rh, twb };
+    });
+    document.getElementById("airSource").textContent = "Open-Meteo forecast";
+  } catch (e) {
+    // offline: typical weather for this month and hour from the analysis
+    const now = new Date(), m = now.getMonth() + 1;
+    S.forecast = Array.from({ length: 24 }, (_, k) => {
+      const h = (now.getHours() + k) % 24, mh = S.profile.month_hour[`${m}-${h}`];
+      return { hour: h, label: hourLabel(h), temp: null, rh: null, twb: mh ? mh.twb : 12 };
+    });
+    document.getElementById("airSource").textContent = "typical weather (offline)";
+  }
+}
+function hourLabel(h) { return (h % 12 || 12) + (h < 12 ? "AM" : "PM"); }
+
+// =====================================================================
+// series
+// =====================================================================
+function liveSeries() {
+  return S.forecast.map((f, i) => {
+    let twb = f.twb;
+    if (i === 0 && S.sensor) twb = S.sensor.twb;
+    const g = S.profile.recent_grid_by_hour[String(f.hour)];
+    const cw = wue(twb);
+    return { label: f.label, hour: f.hour, twb, ci: g.ci, gw: g.gw, wue: cw, water: cw + g.gw };
+  });
+}
+function replaySeries() {
+  const d = S.replay[S.dayIdx];
+  return d.hours.map(h => ({ label: h.label, hour: +h.t.slice(11, 13), twb: h.twb, temp: h.temp, rh: h.rh,
+    ci: h.ci, gw: h.gw, wue: h.wue, water: h.water, pred_ci: h.pred_ci, pred_water: h.pred_water }));
+}
+
+// =====================================================================
+// rendering: decision, chart, air, rack
+// =====================================================================
+function render() {
+  if (!S.profile || !S.forecast) return;
+  const live = S.mode === "live";
+  const ser = live ? liveSeries() : replaySeries();
+  const C = ser.map(x => x.ci);
+  const W = ser.map(x => x.water);
+  const s = live ? choose(C, W, S.w) : choose(ser.map(x => x.pred_ci), ser.map(x => x.pred_water), S.w);
+  S.choice = s;
+
+  // decision card
+  const onsite = pctSaved(win(ser.map(x => x.wue), 0), win(ser.map(x => x.wue), s));
+  const water = pctSaved(win(W, 0), win(W, s));
+  const co2 = pctSaved(win(C, 0), win(C, s));
+  const liters = (win(ser.map(x => x.wue), 0) - win(ser.map(x => x.wue), s)) * JOB_KW * JOB_H;
+  const dec = document.getElementById("decision");
+  if (s === 0) {
+    dec.className = "decision run";
+    dec.innerHTML = `<span class="when">Run now.</span> This is the best window.`;
+  } else {
+    dec.className = "decision";
+    dec.innerHTML = `Wait ${s} hours. <span class="when">Run ${ser[s].label}–${ser[(s + JOB_H) % 24].label}.</span>`;
+  }
+  const freeCool = ser.every(x => x.wue === 0);
+  document.getElementById("decisionSub").textContent = live
+    ? (freeCool
+      ? "Free cooling all day: Ashburn's air is cold enough that cooling uses no water, so today Wetbulb optimizes for carbon. Replay a July day below to see the water savings."
+      : "Using the live weather forecast for Ashburn, the rack's sensor for this hour, and PJM's grid pattern from the last 7 days.")
+    : `Replaying ${S.replay[S.dayIdx].label}: real weather and real grid data, decided with only what was known at 9 AM.`;
+  document.getElementById("decisionLabel").textContent = live
+    ? "Next 24 hours · a 4-hour AI job at 500 kW" : "Replay · a 4-hour AI job at 500 kW";
+  setChip("chipOnsite", onsite); setChip("chipWater", water); setChip("chipCo2", co2);
+  document.getElementById("chipLiters").textContent = Math.max(0, Math.round(liters)).toLocaleString() + " L";
+
+  drawChart(ser, s, live ? null : S.rt);
+  renderAir(ser);
+  updateRack(ser, s, onsite);
+  const w = Math.round(S.w * 100);
+  document.getElementById("weight").value = 100 - w;
+  document.getElementById("focusNote").textContent =
+    w === 50 ? "Equal weight · move the slider or the rack's joystick"
+      : w > 50 ? `Carbon weighted ${w}% · water ${100 - w}%` : `Water weighted ${100 - w}% · carbon ${w}%`;
+}
+function setChip(id, p) {
+  const el = document.getElementById(id);
+  el.textContent = Math.abs(p) < 0.5 ? "0%" : fmtPct(p);
+}
+
+function drawChart(ser, s, nowT) {
+  const svg = document.getElementById("chart");
+  const Wd = 1000, H = 300, L = 62, R = 66, T = 34, B = 34;
+  const n = ser.length, cw = (Wd - L - R) / n;
+  const x = i => L + i * cw + cw / 2;
+  const ci = ser.map(v => v.ci), wa = ser.map(v => v.wue);
+  let cLo = Math.min(...ci), cHi = Math.max(...ci);
+  const pad = Math.max(20, (cHi - cLo) * 0.15); cLo = Math.max(0, cLo - pad); cHi += pad;
+  const wHi = Math.max(0.5, Math.max(...wa) * 1.15);
+  const yc = v => T + (H - T - B) * (1 - (v - cLo) / (cHi - cLo));
+  const yw = v => T + (H - T - B) * (1 - v / wHi);
+  const path = (arr, y) => arr.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("");
+  const mono = 'font-family="JetBrains Mono, monospace" font-size="12"';
+  let g = "";
+  for (let k = 0; k <= 4; k++) {
+    const yy = T + (H - T - B) * k / 4;
+    const cv = cHi - (cHi - cLo) * k / 4, wv = wHi - wHi * k / 4;
+    g += `<line x1="${L}" x2="${Wd - R}" y1="${yy}" y2="${yy}" stroke="#24324f"/>` +
+      `<text x="${L - 8}" y="${yy + 4}" fill="#b4bccb" text-anchor="end" ${mono}>${Math.round(cv)}</text>` +
+      `<text x="${Wd - R + 8}" y="${yy + 4}" fill="#4cc2ff" ${mono}>${wv.toFixed(1)}</text>`;
+  }
+  g += `<text x="${L - 8}" y="${T - 18}" fill="#b4bccb" text-anchor="end" ${mono}>g CO₂</text>` +
+    `<text x="${Wd - R + 8}" y="${T - 18}" fill="#4cc2ff" ${mono}>L H₂O</text>`;
+  const band = (s0, fill, stroke) => `<rect x="${L + s0 * cw}" y="${T}" width="${cw * JOB_H}" height="${H - T - B}" fill="${fill}" ${stroke ? `stroke="${stroke}" stroke-dasharray="5 4"` : ""} rx="6"/>`;
+  let labels = "";
+  ser.forEach((v, i) => {
+    if (i % 3 === 0) labels += `<text x="${x(i)}" y="${H - 10}" fill="#8d9bb5" text-anchor="middle" ${mono}>${v.label}</text>`;
+  });
+  let now = "";
+  if (nowT != null) {
+    const nx = L + clamp(nowT, 0, n) * cw;
+    now = `<line x1="${nx}" x2="${nx}" y1="${T - 4}" y2="${H - B}" stroke="#f2b84b" stroke-width="2"/><circle cx="${nx}" cy="${T - 4}" r="4" fill="#f2b84b"/>`;
+  }
+  const waterArea = path(wa, yw) + ` L${x(n - 1)},${yw(0)} L${x(0)},${yw(0)} Z`;
+  svg.innerHTML = g + band(0, "rgba(180,188,203,0.16)") + band(s, "rgba(242,184,75,0.22)", "#f2b84b") +
+    `<text x="${L + 6}" y="${T + 16}" fill="#b4bccb" ${mono}>run now</text>` +
+    `<text x="${L + s * cw + 6}" y="${T + (s === 0 ? 32 : 16)}" fill="#f2b84b" ${mono}>Wetbulb</text>` +
+    `<path d="${waterArea}" fill="rgba(76,194,255,0.12)"/>` +
+    `<path d="${path(ci, yc)}" fill="none" stroke="#b4bccb" stroke-width="3" stroke-linejoin="round"/>` +
+    `<path d="${path(wa, yw)}" fill="none" stroke="#4cc2ff" stroke-width="3" stroke-linejoin="round"/>` +
+    `<circle cx="${x(n - 1)}" cy="${yc(ci[n - 1])}" r="4" fill="#b4bccb"/><circle cx="${x(n - 1)}" cy="${yw(wa[n - 1])}" r="4" fill="#4cc2ff"/>` +
+    labels + now;
+  document.getElementById("timelineTitle").textContent =
+    S.mode === "live" ? "The next 24 hours" : `${S.replay[S.dayIdx].title} · ${S.replay[S.dayIdx].label}`;
+}
+
+function renderAir(ser) {
+  let cur;
+  if (S.mode === "live") {
+    cur = S.sensor ? { ...S.sensor } : { temp: S.forecast[0].temp, rh: S.forecast[0].rh, twb: S.forecast[0].twb };
+  } else {
+    const h = ser[clamp(Math.floor(S.rt), 0, 23)];
+    cur = { temp: h.temp, rh: h.rh, twb: h.twb };
+  }
+  const idx = S.mode === "live" ? 0 : clamp(Math.floor(S.rt), 0, 23);
+  document.getElementById("airTwb").textContent = cur.twb != null ? cur.twb.toFixed(1) : "–";
+  document.getElementById("airTemp").textContent = cur.temp != null ? cur.temp.toFixed(1) + " °C" : "–";
+  document.getElementById("airRh").textContent = cur.rh != null ? Math.round(cur.rh) + "%" : "–";
+  document.getElementById("airWue").textContent = wue(cur.twb).toFixed(2) + " L/kWh";
+  document.getElementById("airCo2").textContent = Math.round(ser[idx].ci) + " g/kWh";
+}
+
+function drawSpark() {
+  const v = S.sparkVals;
+  const svg = document.getElementById("spark");
+  if (v.length < 2) { svg.innerHTML = ""; return; }
+  const lo = Math.min(...v) - 0.5, hi = Math.max(...v) + 0.5;
+  const pts = v.map((t, i) => [i / (v.length - 1) * 296 + 2, 50 - (t - lo) / (hi - lo) * 44]);
+  const d = pts.map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join("");
+  const last = pts[pts.length - 1];
+  svg.innerHTML = `<path d="${d} L298,54 L2,54 Z" fill="rgba(76,194,255,0.12)"/><path d="${d}" fill="none" stroke="#4cc2ff" stroke-width="2"/>` +
+    `<circle cx="${last[0]}" cy="${last[1]}" r="3.5" fill="#4cc2ff"/>`;
+}
+
+// =====================================================================
+// rack (LCD + fan): what we show and send
+// =====================================================================
+function updateRack(ser, s, onsite) {
+  let l1, l2, fan;
+  if (S.mode === "live") {
+    const cur = ser[0];
+    if (s === 0) { l1 = "*RUN NOW"; l2 = "WB " + cur.twb.toFixed(1) + "C"; fan = fanFor(cur.wue); }
+    else { l1 = `WAIT ${s}h`; l2 = `~-${Math.max(0, Math.round(onsite))}%H2O`; fan = 0; }
+  } else {
+    const h = clamp(Math.floor(S.rt), 0, 23);
+    const running = S.rt >= s && S.rt < s + JOB_H && S.rt < 24;
+    const hh = String(ser[h].hour).padStart(2, "0") + "h ";
+    l1 = hh + (S.rt >= 24 ? "DONE" : running ? "*RUN" : (S.rt >= s + JOB_H ? "DONE" : "WAIT"));
+    const saved = Math.max(0, Math.round(S.race ? S.race.nOn - S.race.wOn : 0));
+    l2 = `~-${saved}L`;
+    fan = running ? fanFor(ser[h].wue) : 0;
+  }
+  S.lcd = [l1.slice(0, 8), l2.slice(0, 8)];
+  S.fan = fan;
+  drawLcd();
+  const fs = document.getElementById("fanSvg");
+  fs.classList.toggle("spin", fan > 0);
+  fs.style.setProperty("--spin", fan > 0 ? (1.6 - fan / 255 * 1.3).toFixed(2) + "s" : "1s");
+  document.getElementById("fanText").textContent = fan > 0
+    ? `Cooling fan ${Math.round(fan / 2.55)}% (water ${(S.mode === "live" ? ser[0].wue : ser[clamp(Math.floor(S.rt), 0, 23)].wue).toFixed(2)} L/kWh)`
+    : (S.mode === "replay" && S.rt >= (S.choice ?? 0) + JOB_H ? "Cooling fan off (job done)" : "Cooling fan off (job waiting)");
+  const co2 = Math.round(ser[S.mode === "live" ? 0 : clamp(Math.floor(S.rt), 0, 23)].ci);
+  sendL(S.lcd[0], S.lcd[1], fan, co2, Math.round(S.w * 100));
+}
+
+const ICON = { "~": "💧", "^": "☁", "*": "✻", "!": "🌡", "#": "█", "_": "▯" };
+function drawLcd() {
+  const el = document.getElementById("lcd");
+  const cells = [];
+  S.lcd.forEach(line => {
+    const t = (line + "        ").slice(0, 8);
+    for (const ch of t) cells.push(`<span>${ICON[ch] || (ch === " " ? "&nbsp;" : ch.replace("<", "&lt;"))}</span>`);
+  });
+  el.innerHTML = cells.join("");
+}
+function drawPages() {
+  document.getElementById("pages").innerHTML =
+    PAGE_NAMES.map((p, i) => `<span class="${i === S.page ? "on" : ""}">${p}</span>`).join("");
+}
+
+// =====================================================================
+// replay race
+// =====================================================================
+function resetRace() {
+  S.race = { nOn: 0, nKg: 0, wOn: 0, wKg: 0 };
+  S.rt = 0;
+  paintRace();
+}
+function tickRace() {
+  const ser = replaySeries();
+  const s = S.choice ?? 0;
+  const acc = start => {
+    let on = 0, kg = 0;
+    for (let k = start; k < start + JOB_H; k++) {
+      const f = clamp(S.rt - k, 0, 1);
+      on += f * ser[k].wue * JOB_KW;
+      kg += f * ser[k].ci * JOB_KW / 1000;
+    }
+    return [on, kg];
+  };
+  [S.race.nOn, S.race.nKg] = acc(0);
+  [S.race.wOn, S.race.wKg] = acc(s);
+  paintRace(s);
+}
+function paintRace(s = 0) {
+  const r = S.race || { nOn: 0, nKg: 0, wOn: 0, wKg: 0 };
+  document.getElementById("nOnsite").textContent = Math.round(r.nOn).toLocaleString() + " L";
+  document.getElementById("nKg").textContent = Math.round(r.nKg) + " kg";
+  document.getElementById("wOnsite").textContent = Math.round(r.wOn).toLocaleString() + " L";
+  document.getElementById("wKg").textContent = Math.round(r.wKg) + " kg";
+  const on = (a, b) => S.mode === "replay" && S.rt >= a && S.rt < b;
+  const st = (id, a) => {
+    const el = document.getElementById(id);
+    const running = on(a, a + JOB_H), done = S.mode === "replay" && S.rt >= a + JOB_H;
+    el.textContent = running ? "running" : done ? "done" : "waiting";
+    el.classList.toggle("on", running);
+  };
+  st("stNormal", 0); st("stWb", s);
+  const ser = S.mode === "replay" ? replaySeries() : null;
+  document.getElementById("clock").textContent = ser
+    ? ser[clamp(Math.floor(S.rt), 0, 23)].label + (S.rt >= 24 ? " ✓" : "") : "--:--";
+  const v = document.getElementById("raceVerdict");
+  if (S.mode === "replay" && S.rt >= 24) {
+    const dl = r.nOn - r.wOn, dk = r.nKg - r.wKg;
+    v.textContent = `Same job, same day: Wetbulb used ${Math.round(dl).toLocaleString()} fewer liters of cooling water` +
+      (dk >= 0 ? ` and ${Math.round(dk)} kg less CO₂.` : ` (${Math.round(-dk)} kg more CO₂).`);
+  } else v.textContent = "";
+}
+function play() {
+  if (!S.replay.length) return;
+  clearInterval(S.timer);
+  S.mode = "replay";
+  document.getElementById("modePill").textContent = "Replay · " + S.replay[S.dayIdx].label;
+  resetRace();
+  render();
+  const t0 = performance.now();
+  S.playing = true;
+  document.getElementById("playBtn").textContent = "↺ Restart";
+  S.timer = setInterval(() => {
+    S.rt = Math.min(24, (performance.now() - t0) / REPLAY_MS * 24);
+    tickRace();
+    render();
+    if (S.rt >= 24) { clearInterval(S.timer); S.playing = false; document.getElementById("playBtn").textContent = "▶ Play again"; }
+  }, 60);
+}
+function backToLive() {
+  clearInterval(S.timer);
+  S.playing = false;
+  S.mode = "live";
+  document.getElementById("modePill").textContent = "Live forecast · Ashburn, VA";
+  document.getElementById("playBtn").textContent = "▶ Play";
+  resetRace();
+  render();
+}
+
+// =====================================================================
+// Web Serial: the rack
+// =====================================================================
+async function connect() {
+  if (!("serial" in navigator)) { toast("Use Chrome or Edge for the rack connection"); return; }
+  try {
+    const port = await navigator.serial.requestPort();
+    await port.open({ baudRate: 115200 });
+    const enc = new TextEncoderStream();
+    enc.readable.pipeTo(port.writable);
+    S.writer = enc.writable.getWriter();
+    const dec = new TextDecoderStream();
+    port.readable.pipeTo(dec.writable);
+    const reader = dec.readable.getReader();
+    setLink(true);
+    S.lastSent = "";
+    render();
+    let buf = "";
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += value;
+      let i;
+      while ((i = buf.indexOf("\n")) >= 0) {
+        const line = buf.slice(0, i).trim();
+        buf = buf.slice(i + 1);
+        if (line) onLine(line);
+      }
+    }
+  } catch (e) {
+    toast("Rack connection closed: " + e.message);
+  }
+  setLink(false);
+  S.writer = null;
+}
+function setLink(on) {
+  document.getElementById("linkDot").classList.toggle("on", on);
+  document.getElementById("linkText").textContent = on ? "Rack connected" : "Rack not connected";
+  document.getElementById("connectBtn").textContent = on ? "Connected" : "Connect rack";
+}
+function onLine(line) {
+  const p = line.split(",");
+  if (p[0] === "S" && p.length >= 3) {
+    const temp = parseFloat(p[1]), rh = parseFloat(p[2]);
+    if (!isNaN(temp) && !isNaN(rh)) setSensor(temp, rh, "rack sensor (live)");
+  } else if (p[0] === "J") {
+    if (p[1] === "PAGE") { S.page = +p[2]; drawPages(); flashCard(PAGE_CARDS[S.page]); }
+    else if (p[1] === "W") { S.w = clamp(+p[2] / 100, 0, 1); flashCard("focusRow"); render(); }
+    else if (p[1] === "BTN") { S.playing ? backToLive() : play(); }
+  } else if (p[0] === "E") {
+    document.getElementById("airSource").textContent = "rack sensor error: check D7";
+  }
+}
+async function sendL(l1, l2, fan, co2, w) {
+  const msg = `L,${l1},${l2},${fan},${co2},${w}`;
+  const now = performance.now();
+  if (!S.writer || (msg === S.lastSent && now - S.lastSentAt < 3000)) return;
+  S.lastSent = msg; S.lastSentAt = now;
+  try { await S.writer.write(msg + "\n"); } catch (e) { /* port closed */ }
+}
+
+function setSensor(temp, rh, source) {
+  S.sensor = { temp, rh, twb: stull(temp, rh), at: Date.now() };
+  S.sparkVals.push(S.sensor.twb);
+  if (S.sparkVals.length > 60) S.sparkVals.shift();
+  document.getElementById("airSource").textContent = source;
+  drawSpark();
+  render();
+}
+
+// =====================================================================
+// UI wiring
+// =====================================================================
+function flashCard(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.add("flash");
+  setTimeout(() => el.classList.remove("flash"), 900);
+}
+let toastTimer;
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 3000);
+}
+function fillEvidence() {
+  const r = S.results;
+  const bt = Object.fromEntries(r.backtest.map(b => [b.policy, b]));
+  document.getElementById("sOnsite").textContent = "−" + bt["Wetbulb"].onsite_saved_pct.toFixed(1) + "%";
+  document.getElementById("sCarbonOnly").textContent = "−" + bt["Carbon only"].onsite_saved_pct.toFixed(1) + "%";
+  document.getElementById("sGallons").textContent = Math.round(r.scale_up.onsite_water_gallons_per_year / 1e6) + "M";
+  document.getElementById("sConflict").textContent = Math.round(r.story.conflict_share_pct) + "%";
+  document.querySelector("#cardEvidence h2").textContent =
+    `What ${r.data.days_backtested.toLocaleString()} real days of Virginia data show`;
+  document.getElementById("sources").textContent =
+    `Grid: ${r.data.grid}, ${r.data.start} to ${r.data.end}. Weather: ${r.data.weather}. ` +
+    `Power-plant water: NREL (Macknick et al. 2012). Cooling water: simplified model calibrated to the ~1.8 L/kWh U.S. average (LBNL 2016). ` +
+    `Scale-up: ${r.scale_up.assumptions}.`;
+  const sel = document.getElementById("daySelect");
+  sel.innerHTML = S.replay.map((d, i) => `<option value="${i}">${d.title} (${d.label})</option>`).join("");
+}
+
+document.getElementById("connectBtn").onclick = connect;
+document.getElementById("playBtn").onclick = play;
+document.getElementById("liveBtn").onclick = backToLive;
+document.getElementById("daySelect").onchange = e => { S.dayIdx = +e.target.value; if (S.mode === "replay") play(); };
+document.getElementById("weight").oninput = e => { S.w = (100 - +e.target.value) / 100; render(); if (S.mode === "replay" && !S.playing) { tickRace(); } };
+document.getElementById("demoBtn").onclick = () => {
+  S.demo = !S.demo;
+  document.getElementById("demoBox").classList.toggle("show", S.demo);
+  document.getElementById("demoBtn").textContent = S.demo ? "Hide demo sensor" : "Demo sensor";
+  if (S.demo) demoInput();
+};
+function demoInput() {
+  const t = +document.getElementById("dT").value, h = +document.getElementById("dH").value;
+  document.getElementById("dTv").textContent = t + " °C";
+  document.getElementById("dHv").textContent = h + "%";
+  setSensor(t, h, "demo sensor");
+}
+document.getElementById("dT").oninput = demoInput;
+document.getElementById("dH").oninput = demoInput;
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
+  if (e.key === " ") { e.preventDefault(); S.playing ? backToLive() : play(); }
+});
+
+// keep the rack fed (it falls back to solo mode after 15 s of silence)
+setInterval(() => { if (S.writer) { S.lastSent = ""; render(); } }, 5000);
+// refresh the forecast every 15 minutes
+setInterval(async () => { await loadForecast(); if (S.mode === "live") render(); }, 15 * 60 * 1000);
+setInterval(() => {
+  const now = new Date();
+  document.getElementById("decisionTime").textContent = now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}, 1000);
+
+(async function init() {
+  drawLcd(); drawPages();
+  await loadData();
+  fillEvidence();
+  await loadForecast();
+  resetRace();
+  render();
+  if (location.hash.startsWith("#replay")) { S.dayIdx = +(location.hash.slice(7) || 0); play(); }
+})();
+</script>
+</body>
+</html>

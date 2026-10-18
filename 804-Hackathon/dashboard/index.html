@@ -1,0 +1,3265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wetbulb · Climate-Aware AI Compute Scheduling</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+<script src="data.js"></script>
+<style>
+/* =====================================================================
+   Wetbulb Climate Design System
+   Environmental Palette: Aquatic Reservoir Cyan, Renewable Emerald,
+   Atmospheric Carbon Amethyst, High-Stress Sun Amber.
+   Zero harsh grain. 100% hardware-accelerated fluid glassmorphism.
+   ===================================================================== */
+:root {
+  --bg: #030712;
+  --bg-gradient: radial-gradient(circle at 50% 0%, #0d1a33 0%, #050914 60%, #02040a 100%);
+  --panel: rgba(11, 19, 38, 0.72);
+  --panel-card: rgba(13, 23, 46, 0.65);
+  --panel-2: rgba(255, 255, 255, 0.04);
+  --panel-hover: rgba(255, 255, 255, 0.08);
+  --line: rgba(148, 163, 214, 0.14);
+  --line-strong: rgba(148, 163, 214, 0.28);
+  --ink: #f0f6ff;
+  --ink-soft: #cbd5e1;
+  --muted: #8493b8;
+  
+  /* Environmental Semantic Tokens */
+  --water: #38bdf8;
+  --water-bright: #7dd3fc;
+  --water-deep: #0284c7;
+  --water-glow: rgba(56, 189, 248, 0.45);
+  
+  --eco: #34d399;
+  --eco-bright: #6ee7b7;
+  --eco-deep: #059669;
+  --eco-glow: rgba(52, 211, 153, 0.45);
+  
+  --carbon: #a78bfa;
+  --carbon-bright: #c4b5fd;
+  --carbon-deep: #7c3aed;
+  
+  --pick: #fbbf24;
+  --pick-glow: rgba(251, 191, 36, 0.45);
+  --stress: #f97316;
+  --stress-glow: rgba(249, 115, 22, 0.35);
+  
+  --aura1: #0ea5e9;
+  --aura2: #10b981;
+  --aura3: #6366f1;
+  
+  --display: "Bricolage Grotesque", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --body: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  background-image: var(--bg-gradient);
+  background-attachment: fixed;
+  color: var(--ink);
+  font: 15px/1.55 var(--body);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection { background: rgba(56, 189, 248, 0.35); color: #fff; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; border: none; background: none; }
+:focus-visible { outline: 2px solid var(--water); outline-offset: 3px; }
+.num { font-variant-numeric: tabular-nums; }
+.label { font: 700 0.68rem/1 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+
+/* ---------- Smooth Atmosphere (Zero Grain / No feTurbulence) ---------- */
+.aurora {
+  position: fixed;
+  inset: -15%;
+  z-index: 0;
+  pointer-events: none;
+  filter: blur(90px);
+  opacity: 0.48;
+  will-change: transform;
+}
+.aurora i { position: absolute; border-radius: 50%; }
+.aurora i:nth-child(1) {
+  width: 60vw; height: 60vw; left: 2%; top: -5%;
+  background: radial-gradient(circle, var(--aura1), transparent 65%);
+  animation: drift1 28s ease-in-out infinite alternate;
+}
+.aurora i:nth-child(2) {
+  width: 52vw; height: 52vw; right: -5%; top: 18%;
+  background: radial-gradient(circle, var(--aura2), transparent 65%);
+  animation: drift2 34s ease-in-out infinite alternate;
+}
+.aurora i:nth-child(3) {
+  width: 50vw; height: 50vw; left: 32%; bottom: -12%;
+  background: radial-gradient(circle, var(--aura3), transparent 65%);
+  animation: drift1 42s ease-in-out infinite alternate-reverse;
+}
+@keyframes drift1 { to { transform: translate(6vw, 5vh) scale(1.08); } }
+@keyframes drift2 { to { transform: translate(-8vw, -3vh) scale(0.94); } }
+
+/* Vapor Canvas */
+#vapor {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Subtle Ambient Vignette (Clean & Silky Smooth, NOT Grainy) */
+.ambient-vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, transparent 50%, rgba(2, 4, 10, 0.45) 100%);
+}
+
+/* Cursor Spotlight (Optimized hardware-accelerated translate3d without blend-mode lag) */
+#cursorLight {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 540px;
+  height: 540px;
+  margin: -270px 0 0 -270px;
+  z-index: 2;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, rgba(52, 211, 153, 0.05) 30%, transparent 65%);
+  will-change: transform;
+  transition: opacity 0.3s ease;
+}
+
+/* Interactive Cursor Dot */
+#cursorDot {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  z-index: 99;
+  pointer-events: none;
+  border-radius: 50%;
+  background: var(--water);
+  box-shadow: 0 0 12px var(--water);
+  opacity: 0.6;
+  will-change: transform;
+}
+
+/* ---------- Layout & Container ---------- */
+.wrap {
+  position: relative;
+  z-index: 3;
+  max-width: 1520px;
+  margin: 0 auto;
+  padding: 16px max(16px, 2.4vw) 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-bottom: 4px;
+}
+.brand { display: flex; align-items: center; gap: 14px; }
+.logo {
+  width: 44px;
+  height: 44px;
+  filter: drop-shadow(0 0 16px rgba(56, 189, 248, 0.65));
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.logo:hover { transform: scale(1.08) rotate(3deg); }
+.logo .ripple {
+  transform-origin: 21px 36px;
+  animation: ripple 2.8s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+}
+@keyframes ripple {
+  from { transform: scale(0.4); opacity: 0.95; }
+  to { transform: scale(1.65); opacity: 0; }
+}
+
+.brand-text h1 {
+  font: 800 2.1rem/1 var(--display);
+  letter-spacing: -0.03em;
+  margin: 0;
+  background: linear-gradient(105deg, #ffffff 10%, #7dd3fc 40%, #34d399 70%, #fbbf24 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.brand-text p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.eco-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(52, 211, 153, 0.14);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  color: var(--eco-bright);
+  font: 700 0.68rem var(--mono);
+  letter-spacing: 0.04em;
+}
+
+.controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  font-size: 0.84rem;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+.dot { width: 9px; height: 9px; border-radius: 50%; background: #5b6787; transition: background 0.3s; }
+.dot.on {
+  background: var(--eco);
+  box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.2), 0 0 14px var(--eco);
+  animation: pulse 1.8s infinite;
+}
+@keyframes pulse { 50% { box-shadow: 0 0 0 7px rgba(52, 211, 153, 0.05), 0 0 18px var(--eco); } }
+
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.05);
+  font-weight: 600;
+  font-size: 0.88rem;
+  transition: transform 0.2s cubic-bezier(.2,.8,.2,1), border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  user-select: none;
+}
+.btn:hover {
+  border-color: rgba(125, 211, 252, 0.6);
+  background: rgba(125, 211, 252, 0.09);
+  box-shadow: 0 4px 20px -4px rgba(56, 189, 248, 0.3);
+  transform: translateY(-1px);
+}
+.btn:active { transform: translateY(1px); }
+.btn.primary {
+  background: linear-gradient(125deg, #0ea5e9, #38bdf8 45%, #10b981 100%);
+  color: #030712;
+  font-weight: 700;
+  border: 0;
+  box-shadow: 0 6px 24px -6px rgba(56, 189, 248, 0.7);
+}
+.btn.primary:hover {
+  box-shadow: 0 8px 30px -4px rgba(52, 211, 153, 0.8);
+  transform: translateY(-2px);
+}
+.btn.eco {
+  background: linear-gradient(125deg, #059669, #10b981 50%, #34d399 100%);
+  color: #030712;
+  font-weight: 700;
+  border: 0;
+  box-shadow: 0 6px 24px -6px rgba(16, 185, 129, 0.6);
+}
+.kbd {
+  font: 600 0.7rem var(--mono);
+  padding: 2px 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--muted);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* Workload & Quick-Scenario Subnav Bar */
+.workload-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  border-radius: 18px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+.workload-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.workload-group .label { margin-right: 4px; }
+.btn-toggle {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  transition: all 0.2s ease;
+}
+.btn-toggle:hover {
+  color: var(--ink);
+  border-color: rgba(56, 189, 248, 0.4);
+  background: rgba(56, 189, 248, 0.08);
+}
+.btn-toggle.active {
+  color: #040914;
+  background: linear-gradient(110deg, #7dd3fc, #34d399);
+  border-color: transparent;
+  font-weight: 700;
+  box-shadow: 0 0 18px -4px rgba(52, 211, 153, 0.6);
+}
+
+/* Grid System */
+.grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+.span8 { grid-column: span 8; }
+.span4 { grid-column: span 4; }
+.span6 { grid-column: span 6; }
+.span12 { grid-column: span 12; }
+
+/* ---------- Glass Cards with Smooth Cursor Light Edge ---------- */
+.card {
+  --mx: 50%;
+  --my: 50%;
+  position: relative;
+  border-radius: 22px;
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  background: linear-gradient(var(--panel-card), var(--panel-card)) padding-box,
+              radial-gradient(420px circle at var(--mx) var(--my), rgba(56, 189, 248, 0.45), rgba(52, 211, 153, 0.2) 30%, rgba(148, 163, 214, 0.12) 65%) border-box;
+  border: 1px solid transparent;
+  backdrop-filter: blur(20px) saturate(1.25);
+  -webkit-backdrop-filter: blur(20px) saturate(1.25);
+  box-shadow: 0 24px 50px -20px rgba(0, 0, 0, 0.7);
+  transition: box-shadow 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.25s ease;
+}
+.card:hover {
+  box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.85), 0 0 30px -10px rgba(56, 189, 248, 0.15);
+}
+.card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(480px circle at var(--mx) var(--my), rgba(56, 189, 248, 0.05), transparent 45%);
+}
+.card.flash {
+  box-shadow: 0 0 0 2px var(--pick), 0 0 45px -4px var(--pick);
+  transition: box-shadow 0.15s ease;
+}
+.card h2 {
+  font: 700 1.25rem/1.2 var(--display);
+  margin: 0;
+  letter-spacing: -0.015em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Decision Card */
+.decision-wrap { display: flex; flex-direction: column; gap: 6px; }
+.decision {
+  font: 800 clamp(2.1rem, 3.8vw, 3.4rem)/1.05 var(--display);
+  letter-spacing: -0.035em;
+  margin: 2px 0 0;
+}
+.decision .go {
+  background: linear-gradient(100deg, #fde68a, #fbbf24 45%, #f97316);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.decision.run .go {
+  background: linear-gradient(100deg, #a7f3d0, #34d399 45%, #38bdf8);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+.sub {
+  color: var(--muted);
+  font-size: 0.98rem;
+  max-width: 72ch;
+  line-height: 1.5;
+}
+
+/* Stat Chips */
+.chips {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 6px;
+}
+.chip {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 13px 15px;
+  border-radius: 16px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  transition: transform 0.2s, border-color 0.2s;
+}
+.chip:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.chip b {
+  position: relative;
+  font: 800 1.85rem/1.05 var(--display);
+  letter-spacing: -0.02em;
+}
+.chip span {
+  position: relative;
+  color: var(--muted);
+  font-size: 0.79rem;
+  line-height: 1.3;
+}
+.chip::before {
+  content: "";
+  position: absolute;
+  inset: auto -20% -60% -20%;
+  height: 80%;
+  filter: blur(24px);
+  opacity: 0.35;
+  background: var(--c, var(--water));
+}
+.chip.w { --c: var(--water); } .chip.w b { color: #7dd3fc; }
+.chip.c { --c: var(--carbon); } .chip.c b { color: #c4b5fd; }
+.chip.g { --c: var(--eco); } .chip.g b { color: #6ee7b7; text-shadow: 0 0 20px rgba(52, 211, 153, 0.4); }
+.chip.eq { --c: var(--pick); } .chip.eq b { color: #fde68a; }
+
+/* Gauge Card */
+.gauge-wrap { position: relative; display: grid; place-items: center; margin: 4px 0; }
+#gauge { width: 100%; max-width: 230px; height: auto; overflow: visible; }
+.gauge-read { position: absolute; top: 52%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+.gauge-read b { display: block; font: 800 2.4rem/1 var(--display); letter-spacing: -0.03em; }
+.gauge-read span { color: var(--muted); font-size: 0.82rem; }
+
+/* Cooling Mode Badge */
+.cooling-mode-pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+  background: rgba(14, 165, 233, 0.12);
+  border: 1px solid rgba(14, 165, 233, 0.3);
+  color: #7dd3fc;
+  transition: all 0.3s ease;
+}
+.cooling-mode-pill.free {
+  background: rgba(52, 211, 153, 0.15);
+  border-color: rgba(52, 211, 153, 0.4);
+  color: #6ee7b7;
+}
+.cooling-mode-pill.stress {
+  background: rgba(249, 115, 22, 0.15);
+  border-color: rgba(249, 115, 22, 0.4);
+  color: #fdba74;
+}
+
+.air-rows { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.air-rows div {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 9px 12px;
+  transition: border-color 0.2s;
+}
+.air-rows div:hover { border-color: rgba(255, 255, 255, 0.2); }
+.air-rows b { display: block; font: 700 1.15rem var(--display); }
+.air-rows span { color: var(--muted); font-size: 0.75rem; }
+
+.demo-box { display: none; flex-direction: column; gap: 8px; border-top: 1px dashed var(--line); padding-top: 12px; }
+.demo-box.show { display: flex; }
+.demo-box label { display: flex; justify-content: space-between; font-size: 0.82rem; color: var(--muted); }
+
+/* Timeline Chart & Environmental Visualization */
+.chart-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.chart-toggles {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.chart-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--muted);
+  transition: all 0.2s;
+}
+.chart-toggle-btn.on {
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+.chart-toggle-btn i {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.chart-box {
+  position: relative;
+  overflow-x: auto;
+  border-radius: 14px;
+  background: rgba(4, 9, 22, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  padding: 6px 0;
+}
+#chart {
+  width: 100%;
+  min-width: 680px;
+  height: 255px;
+  display: block;
+  overflow: visible;
+}
+
+/* Rich Environmental Tooltip */
+.tip {
+  position: absolute;
+  pointer-events: none;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(6, 12, 26, 0.94);
+  border: 1px solid rgba(125, 211, 252, 0.35);
+  box-shadow: 0 12px 36px -4px rgba(0, 0, 0, 0.8), 0 0 20px -5px rgba(56, 189, 248, 0.4);
+  font-size: 0.82rem;
+  min-width: 220px;
+  opacity: 0;
+  transition: opacity 0.15s, transform 0.15s;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 10;
+}
+.tip.show { opacity: 1; transform: translateY(-4px); }
+.tip-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+}
+.tip-head b { font-family: var(--display); font-size: 1.05rem; }
+.tip-badge {
+  font: 700 0.68rem var(--mono);
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+.tip-row { display: flex; justify-content: space-between; gap: 14px; margin-top: 3px; }
+.tip-eco-note {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--line);
+  color: var(--eco-bright);
+  font-size: 0.76rem;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* ---------- Priority & Custom Sliders (Silky Smooth, Zero Grain) ---------- */
+.focus {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 4px 4px;
+}
+.focus .end { font-weight: 600; font-size: 0.92rem; }
+
+.slider-track-wrap {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+.slider-bubble {
+  position: absolute;
+  top: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(10, 18, 36, 0.96);
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.7), 0 0 12px rgba(56, 189, 248, 0.35);
+  color: #f8fafc;
+  font: 700 0.74rem var(--mono);
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  z-index: 5;
+}
+
+/* Custom Range Input (Fluid, zero grain, 60fps) */
+input[type=range] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  background: transparent;
+  cursor: grab;
+  margin: 0;
+}
+input[type=range]:active { cursor: grabbing; }
+input[type=range]:focus { outline: none; }
+
+/* Prio Slider Track & Thumb */
+input[type=range].prio {
+  height: 24px;
+}
+input[type=range].prio::-webkit-slider-runnable-track {
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #a78bfa 0%, #818cf8 35%, #38bdf8 70%, #34d399 100%);
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+input[type=range].prio::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ffffff 0%, #e0f2fe 60%, #bae6fd 100%);
+  border: 2px solid #030712;
+  box-shadow: 0 0 0 2px #38bdf8, 0 3px 14px rgba(56, 189, 248, 0.6);
+  margin-top: -7px;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+input[type=range].prio::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 3px #34d399, 0 4px 20px rgba(52, 211, 153, 0.85);
+}
+input[type=range].prio::-moz-range-track {
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #a78bfa 0%, #818cf8 35%, #38bdf8 70%, #34d399 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.25);
+}
+input[type=range].prio::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #030712;
+  box-shadow: 0 0 0 2px #38bdf8, 0 3px 14px rgba(56, 189, 248, 0.6);
+}
+
+/* Plain Slider */
+input[type=range].plain {
+  height: 20px;
+}
+input[type=range].plain::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+input[type=range].plain::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--water);
+  border: 2px solid #030712;
+  box-shadow: 0 0 10px var(--water);
+  margin-top: -5px;
+  transition: transform 0.1s ease;
+}
+input[type=range].plain::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+input[type=range].plain::-moz-range-track {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+}
+input[type=range].plain::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--water);
+  border: 2px solid #030712;
+  box-shadow: 0 0 10px var(--water);
+}
+
+.focus-note {
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+/* Rack Card */
+.rack { align-items: center; text-align: center; }
+.lcd {
+  width: 100%;
+  max-width: 330px;
+  padding: 12px;
+  border-radius: 14px;
+  background: #142011;
+  box-shadow: inset 0 0 0 2px #26381e, 0 0 50px -10px rgba(163, 230, 53, 0.35);
+}
+.lcd-glass {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+  padding: 10px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #b7e36a, #88be3f);
+  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.3);
+}
+.lcd-glass span {
+  background: rgba(0, 0, 0, 0.08);
+  color: #162409;
+  font: 700 1.4rem/1.5 var(--mono);
+  border-radius: 3px;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.2);
+}
+.fan-row { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 0.88rem; }
+#fanSvg { width: 48px; height: 48px; filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.5)); }
+#fanSvg.spin .blades { animation: spin var(--spin, 1s) linear infinite; transform-origin: 24px 24px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.pages { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.pages span {
+  font: 700 0.66rem var(--mono);
+  letter-spacing: 0.06em;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  transition: all 0.2s;
+}
+.pages span.on {
+  border-color: var(--pick);
+  color: var(--pick);
+  box-shadow: 0 0 14px -2px rgba(251, 191, 36, 0.6);
+}
+.hint { color: var(--muted); font-size: 0.78rem; }
+
+/* Replay Race Section */
+.replay-grid { display: grid; grid-template-columns: 1fr 1.25fr; gap: 18px; align-items: start; }
+.replay-left { display: flex; flex-direction: column; gap: 14px; }
+@media (max-width: 1100px) { .replay-grid { grid-template-columns: 1fr; } }
+
+.days { display: flex; gap: 8px; flex-wrap: wrap; }
+.day {
+  padding: 8px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  font-size: 0.84rem;
+  text-align: left;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s;
+}
+.day:hover { transform: translateY(-1px); border-color: rgba(251, 191, 36, 0.5); }
+.day small { display: block; color: var(--muted); font-size: 0.72rem; }
+.day.on {
+  border-color: var(--pick);
+  background: rgba(251, 191, 36, 0.12);
+  box-shadow: 0 0 20px -5px rgba(251, 191, 36, 0.35);
+}
+
+.replay-bar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.play {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  border: 0;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #fde68a, #fbbf24 45%, #f97316);
+  box-shadow: 0 0 0 6px rgba(251, 191, 36, 0.12), 0 10px 40px -8px rgba(251, 191, 36, 0.8);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.play:hover { transform: scale(1.06); box-shadow: 0 0 0 8px rgba(251, 191, 36, 0.2), 0 12px 45px -6px rgba(251, 191, 36, 0.9); }
+.play:active { transform: scale(0.96); }
+.play svg { width: 22px; height: 22px; }
+.clock {
+  font: 700 2rem/1 var(--mono);
+  letter-spacing: -0.02em;
+  min-width: 4.4ch;
+  background: linear-gradient(90deg, #fde68a, #fb923c);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.progress {
+  flex: 1;
+  min-width: 160px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+.progress i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, #fbbf24, #10b981, #38bdf8);
+  border-radius: inherit;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.7);
+}
+
+.race { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.lane {
+  border-radius: 18px;
+  padding: 16px 18px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color 0.2s;
+}
+.lane.wb {
+  border-color: rgba(52, 211, 153, 0.4);
+  background: rgba(52, 211, 153, 0.06);
+  box-shadow: 0 8px 30px -10px rgba(52, 211, 153, 0.15);
+}
+.lane h3 {
+  margin: 0;
+  font: 700 1.05rem var(--display);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.state {
+  font: 700 0.68rem var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--muted);
+}
+.state.on {
+  background: rgba(52, 211, 153, 0.2);
+  color: var(--eco-bright);
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.3);
+}
+.state.done { color: #cbd5e1; }
+.vals { display: flex; gap: 24px; }
+.vals b { font: 800 1.75rem/1 var(--display); letter-spacing: -0.02em; }
+.vals .w { color: #7dd3fc; }
+.vals span { display: block; color: var(--muted); font-size: 0.75rem; margin-top: 3px; }
+
+/* Tank with Aquatic Wave Shimmer */
+.tank {
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+.tank i {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #0284c7, #38bdf8 60%, #a5f3fc);
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.7);
+  transition: width 0.15s ease;
+}
+.lane.wb .tank i {
+  background: linear-gradient(90deg, #059669, #10b981 60%, #7dd3fc);
+  box-shadow: 0 0 18px rgba(52, 211, 153, 0.7);
+}
+
+.verdict {
+  font: 700 1.12rem/1.4 var(--display);
+  min-height: 1.4em;
+  background: linear-gradient(90deg, #a7f3d0, #34d399 40%, #7dd3fc);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Evidence Section */
+.section-title {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 32px;
+  padding-bottom: 8px;
+}
+.section-title h2 {
+  font: 800 clamp(1.8rem, 3.2vw, 2.8rem)/1.05 var(--display);
+  letter-spacing: -0.03em;
+  margin: 0;
+  max-width: 24ch;
+}
+.section-title p { color: var(--muted); max-width: 56ch; margin: 0; }
+
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.stat b {
+  font: 800 clamp(2.2rem, 3.6vw, 3.4rem)/1 var(--display);
+  letter-spacing: -0.035em;
+}
+.stat span { color: var(--muted); font-size: 0.88rem; line-height: 1.35; }
+.stat .w { color: #7dd3fc; text-shadow: 0 0 30px rgba(56, 189, 248, 0.45); }
+.stat .g { color: #6ee7b7; text-shadow: 0 0 30px rgba(52, 211, 153, 0.45); }
+.stat .c { color: #c4b5fd; }
+
+.mini { width: 100%; height: 235px; display: block; overflow: visible; }
+.how { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.how .card { gap: 10px; }
+.how .step { font: 800 0.8rem var(--mono); color: var(--eco-bright); }
+.how h3 { font: 700 1.25rem var(--display); margin: 0; }
+.how p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+.sources { color: var(--muted); font-size: 0.8rem; line-height: 1.6; }
+
+/* Scale Impact Simulator Banner */
+.scale-banner {
+  border-radius: 20px;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, rgba(5, 150, 105, 0.15), rgba(14, 165, 233, 0.12) 50%, rgba(124, 58, 237, 0.1));
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 16px 40px -15px rgba(0, 0, 0, 0.6);
+}
+.scale-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.scale-header h3 {
+  font: 800 1.35rem var(--display);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.scale-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+.scale-metric-box {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+.scale-metric-box b {
+  display: block;
+  font: 800 1.7rem/1 var(--display);
+  letter-spacing: -0.02em;
+  color: #a7f3d0;
+}
+.scale-metric-box span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+/* ---------- Neal.fun Style Public Impact & Gamification ---------- */
+.neal-section {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 8px;
+}
+
+/* Real-Time Live Ticker */
+.ticker-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 20px;
+  border-radius: 16px;
+  background: linear-gradient(90deg, rgba(6, 182, 212, 0.16), rgba(59, 130, 246, 0.12) 50%, rgba(16, 185, 129, 0.16));
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7), inset 0 0 20px rgba(56, 189, 248, 0.1);
+  flex-wrap: wrap;
+}
+.ticker-pulse {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 700 0.82rem var(--mono);
+  color: #38bdf8;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.pulse-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #38bdf8;
+  box-shadow: 0 0 12px #38bdf8;
+  animation: pulse-ring 1.8s infinite;
+}
+@keyframes pulse-ring {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 18px #34d399; }
+  100% { transform: scale(0.9); opacity: 0.8; }
+}
+.ticker-stats {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.ticker-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.ticker-item b {
+  font: 800 1.25rem var(--mono);
+  color: #f8fafc;
+}
+
+/* Neal.fun Public Impact Grid with 3D Flip Cards */
+.neal-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+@media (max-width: 950px) {
+  .neal-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 620px) {
+  .neal-grid { grid-template-columns: 1fr; }
+}
+
+.flip-card {
+  background-color: transparent;
+  perspective: 1000px;
+  height: 195px;
+  cursor: pointer;
+}
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  text-align: left;
+  transition: transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-style: preserve-3d;
+}
+.flip-card:hover .flip-card-inner,
+.flip-card.flipped .flip-card-inner {
+  transform: rotateY(180deg);
+}
+.flip-front, .flip-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  border-radius: 18px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1px solid var(--line);
+  background: rgba(10, 18, 38, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+.flip-front {
+  border-left: 4px solid var(--accent, #38bdf8);
+}
+.flip-front .icon-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.flip-front .icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+.flip-front .badge {
+  font: 700 0.68rem var(--mono);
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+}
+.flip-front .num {
+  font: 800 1.65rem/1 var(--display);
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  margin: 6px 0 2px;
+}
+.flip-front .desc {
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.35;
+}
+.flip-front .hint {
+  font-size: 0.72rem;
+  color: #38bdf8;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.flip-back {
+  transform: rotateY(180deg);
+  background: linear-gradient(145deg, #0f1f3d, #081122);
+  border-color: rgba(56, 189, 248, 0.4);
+  color: #e2e8f0;
+}
+.flip-back h4 {
+  font: 700 0.95rem var(--display);
+  margin: 0;
+  color: #7dd3fc;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.flip-back p {
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #cbd5e1;
+  margin: 6px 0 0;
+}
+.flip-back .foot {
+  font: 700 0.7rem var(--mono);
+  color: #34d399;
+}
+
+/* Neal.fun Interactive Reservoir Mini-Game & Hotspots */
+.reservoir-card {
+  padding: 18px 22px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(8, 20, 44, 0.9), rgba(12, 30, 60, 0.9));
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 20px;
+  align-items: center;
+}
+@media (max-width: 800px) {
+  .reservoir-card { grid-template-columns: 1fr; }
+}
+.reservoir-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.reservoir-tank-wrap {
+  position: relative;
+  height: 140px;
+  background: rgba(3, 7, 18, 0.65);
+  border: 2px solid rgba(56, 189, 248, 0.4);
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.reservoir-water {
+  position: relative;
+  width: 100%;
+  height: 68%;
+  background: linear-gradient(180deg, #38bdf8 0%, #0284c7 50%, #0369a1 100%);
+  transition: height 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 -4px 18px rgba(56, 189, 248, 0.6);
+}
+.reservoir-water::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background: #7dd3fc;
+  border-radius: 50%;
+  opacity: 0.8;
+}
+.reservoir-label {
+  position: absolute;
+  top: 10px;
+  left: 14px;
+  right: 14px;
+  display: flex;
+  justify-content: space-between;
+  font: 700 0.78rem var(--mono);
+  color: #bae6fd;
+  z-index: 2;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+}
+.btn-game {
+  font: 700 0.85rem var(--display);
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.2), rgba(14, 165, 233, 0.35));
+  color: #f8fafc;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-game:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(56, 189, 248, 0.4);
+  border-color: #38bdf8;
+}
+.btn-game:active {
+  transform: translateY(1px);
+}
+
+.hotspot-pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.hotspot-pill {
+  font: 600 0.76rem var(--display);
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.hotspot-pill.active, .hotspot-pill:hover {
+  border-color: #38bdf8;
+  color: #ffffff;
+  background: rgba(56, 189, 248, 0.15);
+}
+
+/* Flex Workload Slider Box */
+.workload-slider-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 18px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+
+/* Modals & Toast */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  z-index: 50;
+  transform: translate(-50%, 20px);
+  padding: 12px 20px;
+  border-radius: 14px;
+  background: rgba(6, 12, 26, 0.95);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(56, 189, 248, 0.3);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: none;
+  place-items: center;
+  background: rgba(2, 4, 10, 0.78);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 16px;
+}
+.modal-backdrop.show { display: grid; }
+.modal-card {
+  width: min(580px, 94vw);
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #091124;
+  border: 1px solid rgba(125, 211, 252, 0.3);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9), 0 0 40px rgba(56, 189, 248, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.modal-head h2 { font: 800 1.4rem var(--display); margin: 0; }
+.close-btn { font-size: 1.4rem; color: var(--muted); cursor: pointer; }
+.close-btn:hover { color: #fff; }
+
+.code-snippet {
+  background: #030712;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px;
+  font: 500 0.8rem/1.5 var(--mono);
+  color: #7dd3fc;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+/* Reveal On Scroll */
+.js .reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.8s cubic-bezier(.2,.8,.2,1), transform 0.8s cubic-bezier(.2,.8,.2,1);
+}
+.js .reveal.in { opacity: 1; transform: none; }
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .span8, .span4, .span6 { grid-column: span 12; }
+  .chips { grid-template-columns: repeat(2, 1fr); }
+  .stats, .how, .scale-metrics-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .race, .stats, .how, .chips, .scale-metrics-grid { grid-template-columns: 1fr; }
+  .brand-text h1 { font-size: 1.7rem; }
+}
+/* Multi-Page Site Navigation */
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(6, 12, 28, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 5px 6px;
+  overflow-x: auto;
+  max-width: 100%;
+  margin-top: 4px;
+}
+.nav-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  color: var(--muted);
+  text-decoration: none;
+  font: 600 0.86rem var(--display);
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  white-space: nowrap;
+}
+.nav-tab:hover {
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.08);
+}
+.nav-tab.active {
+  color: #030712;
+  background: linear-gradient(135deg, #38bdf8, #34d399);
+  box-shadow: 0 4px 14px rgba(56, 189, 248, 0.4);
+  font-weight: 700;
+}
+.card {
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+</style>
+</head>
+<body>
+
+<div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
+<canvas id="vapor" aria-hidden="true"></canvas>
+<div class="ambient-vignette" aria-hidden="true"></div>
+<div id="cursorLight" aria-hidden="true"></div>
+<div id="cursorDot" aria-hidden="true"></div>
+
+<div class="wrap">
+  <!-- Top Navigation & Controls -->
+  <header class="top">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 42 42" aria-hidden="true">
+        <defs>
+          <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#6ee7b7"/>
+            <stop offset="40%" stop-color="#38bdf8"/>
+            <stop offset="100%" stop-color="#818cf8"/>
+          </linearGradient>
+        </defs>
+        <ellipse class="ripple" cx="21" cy="36" rx="12" ry="3" fill="none" stroke="#38bdf8" stroke-width="1.3"/>
+        <path d="M21 3C17 10 10 16 10 23a11 11 0 0 0 22 0C32 16 25 10 21 3z" fill="url(#lg)"/>
+        <path d="M15.5 24a5.5 5.5 0 0 0 5.5 5.5" stroke="#ffffff" stroke-opacity=".8" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Wetbulb</h1>
+        <p>
+          <span>Virginia Data Center Alley AI Dispatcher</span>
+          <span class="eco-tag">🍃 WATER & CARBON AI</span>
+        </p>
+      </div>
+    </div>
+    
+    <div class="controls">
+      <span class="pill"><span class="dot" id="linkDot"></span><span id="linkText">Rack offline</span></span>
+      <span class="pill" id="modePill">Live · Ashburn, VA</span>
+      <button class="btn primary magnetic" id="connectBtn" aria-label="Connect hardware rack">Connect rack</button>
+      <button class="btn magnetic" id="exportBtn" aria-label="Export schedule dispatch">Export plan</button>
+      <button class="btn magnetic" id="demoBtn" aria-label="Demo sensor sliders">Demo sensor</button>
+      <button class="btn magnetic" id="fsBtn" title="Full screen (F)" aria-label="Full screen">⤢</button>
+      <button class="btn magnetic" id="helpBtn" title="Shortcuts (?)" aria-label="Keyboard shortcuts">?</button>
+    </div>
+  </header>
+
+  <!-- Multi-Page Site Navigation -->
+  <nav class="site-nav" aria-label="Main Site Navigation">
+    <a href="index.html" class="nav-tab active">⚡ Live Dispatcher</a>
+    <a href="impact.html" class="nav-tab">🎮 Public Impact (Neal.fun)</a>
+    <a href="backtest.html" class="nav-tab">📊 1,016-Day Evidence</a>
+    <a href="calculator.html" class="nav-tab">🧮 What-If ROI Calculator</a>
+    <a href="methodology.html" class="nav-tab">📖 Methodology</a>
+  </nav>
+
+  <!-- Interactive Workload & Season Preset Bar -->
+  <nav class="workload-bar" aria-label="Workload and Scenario Controls">
+    <div class="workload-group">
+      <span class="label">AI Workload:</span>
+      <button class="btn-toggle active" data-job="inference" id="wInference">🧠 Batch Inference (500 kW · 4h)</button>
+      <button class="btn-toggle" data-job="training" id="wTraining">🤖 LLM Pretrain (10 MW · 8h)</button>
+      <button class="btn-toggle" data-job="diffusion" id="wDiffusion">🎨 Generative Video (2 MW · 6h)</button>
+      <button class="btn-toggle" data-job="finetune" id="wFinetune">⚡ Fine-Tuning (1 MW · 3h)</button>
+    </div>
+    <div class="workload-group">
+      <span class="label">Weather Preset:</span>
+      <button class="btn-toggle active" id="btnLiveWeather">Live Ashburn</button>
+      <button class="btn-toggle" id="btnHeatwave">☀️ July Heatwave</button>
+      <button class="btn-toggle" id="btnHumid">⛈️ Humid Storm</button>
+      <button class="btn-toggle" id="btnWinter">❄️ Winter Free-Cooling</button>
+    </div>
+  </nav>
+
+  <!-- Main Dashboard Grid -->
+  <section class="grid">
+    <!-- Decision Card -->
+    <article class="card span8" id="cardDecision">
+      <div class="card-head">
+        <span class="label" id="decisionLabel">Next 24 hours · 4-hour AI job at 500 kW</span>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="eco-tag" id="ecoScoreTag">🍃 ECO-OPTIMIZED</span>
+          <span class="label num" id="decisionTime"></span>
+        </div>
+      </div>
+      <div class="decision-wrap">
+        <div class="decision" id="decision">Reading the air…</div>
+        <div class="sub" id="decisionSub"></div>
+      </div>
+      <div class="chips">
+        <div class="chip w"><b class="num" id="chipOnsite">–</b><span>cooling tower water spared</span></div>
+        <div class="chip w"><b class="num" id="chipWater">–</b><span>total water (incl. power grid)</span></div>
+        <div class="chip c"><b class="num" id="chipCo2">–</b><span>carbon emissions reduced</span></div>
+        <div class="chip g"><b class="num" id="chipLiters">–</b><span>liters saved on this job run</span></div>
+      </div>
+    </article>
+
+    <!-- Cooling-Tower Air Intake & Wet-Bulb Thermodynamics -->
+    <article class="card span4" id="cardAir">
+      <div class="card-head">
+        <h2>Cooling-Tower Intake</h2>
+        <span class="label" id="airSource">forecast</span>
+      </div>
+      
+      <div class="gauge-wrap">
+        <svg id="gauge" viewBox="0 0 300 200" aria-label="Wet-bulb gauge"></svg>
+        <div class="gauge-read">
+          <b class="num" id="airTwb">–</b>
+          <span>°C wet-bulb</span>
+        </div>
+      </div>
+      
+      <div class="cooling-mode-pill free" id="coolingModePill">
+        <span>❄️</span>
+        <span id="coolingModeText">100% Free Air Cooling (0 L/kWh)</span>
+      </div>
+
+      <div class="air-rows">
+        <div><b class="num" id="airTemp">–</b><span>ambient air temp</span></div>
+        <div><b class="num" id="airRh">–</b><span>relative humidity</span></div>
+        <div><b class="num" id="airWue" style="color:#7dd3fc">–</b><span>cooling water rate</span></div>
+        <div><b class="num" id="airCo2" style="color:#c4b5fd">–</b><span>grid carbon intensity</span></div>
+      </div>
+
+      <div class="demo-box" id="demoBox">
+        <label for="dT">Air temperature <span id="dTv">22 °C</span></label>
+        <input class="plain" type="range" id="dT" min="-5" max="38" step="0.5" value="22" aria-label="Demo air temperature">
+        <label for="dH">Relative humidity <span id="dHv">45%</span></label>
+        <input class="plain" type="range" id="dH" min="10" max="100" step="1" value="45" aria-label="Demo humidity">
+      </div>
+    </article>
+
+    <!-- 24-Hour Timeline & Priority Slider -->
+    <article class="card span8" id="cardTimeline">
+      <div class="card-head">
+        <div>
+          <h2 id="timelineTitle">The next 24 hours in Ashburn</h2>
+          <span class="hint" id="timelineSub">Environmental optimization window across PJM grid & Ashburn thermodynamics</span>
+        </div>
+        <div class="chart-toggles">
+          <button class="chart-toggle-btn on" id="toggleWater"><i style="background:var(--water)"></i> Water (L/kWh)</button>
+          <button class="chart-toggle-btn on" id="toggleCarbon"><i style="background:var(--carbon)"></i> Carbon (g/kWh)</button>
+          <button class="chart-toggle-btn on" id="toggleEco"><i style="background:var(--eco)"></i> Eco Sweet Spot</button>
+        </div>
+      </div>
+
+      <div class="chart-box" id="chartBox">
+        <svg id="chart" viewBox="0 0 1000 255" preserveAspectRatio="none" role="img" aria-label="24 hour carbon and water timeline"></svg>
+        <div class="tip" id="tip"></div>
+      </div>
+
+      <div class="focus" id="focusRow">
+        <span class="end" style="color:#c4b5fd">🍃 Prioritize Carbon</span>
+        <div class="slider-track-wrap">
+          <div class="slider-bubble" id="weightBubble">50% Water / 50% Carbon</div>
+          <input class="prio" type="range" id="weight" min="0" max="100" step="1" value="50" aria-label="Carbon versus water priority">
+        </div>
+        <span class="end" style="color:#7dd3fc">💧 Prioritize Water</span>
+      </div>
+      <div class="focus-note" id="focusNote">Equal weight · Drag slider smoothly to balance environmental priorities</div>
+    </article>
+
+    <!-- Hardware Rack LCD Mirror & Cooling Fan Simulation -->
+    <article class="card span4 rack" id="cardRack">
+      <div class="card-head" style="width:100%">
+        <h2>Rack Unit 01 Mirror</h2>
+        <span class="label">16x2 LCD + PWM FAN</span>
+      </div>
+      <div class="lcd"><div class="lcd-glass" id="lcd"></div></div>
+      <div class="fan-row">
+        <svg id="fanSvg" viewBox="0 0 48 48" aria-hidden="true">
+          <circle cx="24" cy="24" r="22" fill="none" stroke="rgba(125,211,252,.25)" stroke-width="2"/>
+          <g class="blades" fill="#38bdf8">
+            <path d="M24 24c0-8 2-15 7-15s3 9-7 15z"/>
+            <path d="M24 24c8 0 15 2 15 7s-9 3-15-7z"/>
+            <path d="M24 24c0 8-2 15-7 15s-3-9 7-15z"/>
+            <path d="M24 24c-8 0-15-2-15-7s9-3 15 7z"/>
+          </g>
+          <circle cx="24" cy="24" r="3" fill="#030712"/>
+        </svg>
+        <span id="fanText">Cooling fan off · eco waiting</span>
+      </div>
+      <div class="pages" id="pages"></div>
+      <span class="hint">Physical Joystick: ←/→ pages · ↑/↓ priority · press = replay</span>
+    </article>
+
+    <!-- Real Historical Virginia Replay Race -->
+    <article class="card span12" id="cardReplay">
+      <div class="card-head">
+        <div>
+          <h2>Virginia Historical Day Replay: Run Now vs. Wetbulb</h2>
+          <span class="hint">Job submitted at 9 AM, due within 24 hours · Simulating 24 real hours in 30 seconds</span>
+        </div>
+      </div>
+      
+      <div class="replay-grid">
+        <div class="replay-left">
+          <div class="days" id="days"></div>
+          <div class="replay-bar">
+            <button class="play magnetic" id="playBtn" aria-label="Play or pause historical replay">
+              <svg viewBox="0 0 24 24"><path id="playIcon" d="M7 4.5v15l13-7.5z" fill="#1a0e00"/></svg>
+            </button>
+            <span class="clock num" id="clock">9AM</span>
+            <div class="progress"><i id="prog"></i></div>
+            <button class="btn" id="liveBtn">Back to live forecast</button>
+          </div>
+          <div class="verdict" id="raceVerdict"></div>
+        </div>
+
+        <div class="race">
+          <div class="lane">
+            <h3>Standard Data Center Policy <span class="state" id="stNormal">waiting</span></h3>
+            <div class="vals">
+              <div><b class="num w" id="nOnsite">0 L</b><span>evaporated water</span></div>
+              <div><b class="num" id="nKg">0 kg</b><span>carbon emissions</span></div>
+            </div>
+            <div class="tank"><i id="nTank"></i></div>
+          </div>
+          <div class="lane wb">
+            <h3>With Wetbulb Climate AI <span class="state" id="stWb">waiting</span></h3>
+            <div class="vals">
+              <div><b class="num w" id="wOnsite">0 L</b><span>evaporated water</span></div>
+              <div><b class="num" id="wKg">0 kg</b><span>carbon emissions</span></div>
+            </div>
+            <div class="tank"><i id="wTank"></i></div>
+          </div>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <!-- Virginia Fleet Scale-Up Environmental Impact Simulator -->
+  <section class="scale-banner reveal">
+    <div class="scale-header">
+      <div>
+        <h3>🌲 Virginia Hyperscale Environmental Impact</h3>
+        <p style="margin:2px 0 0;color:var(--muted);font-size:0.88rem;" id="scaleSubtitle">Scaled to Northern Virginia's 4.0 GW data center capacity with 15% flexible workloads</p>
+      </div>
+      <div class="workload-group">
+        <span class="label">Scale View:</span>
+        <button class="btn-toggle active" id="btnScaleSingle">Single AI Job</button>
+        <button class="btn-toggle" id="btnScaleCampus">100 MW Campus</button>
+        <button class="btn-toggle" id="btnScaleVA">4.0 GW Virginia Alley</button>
+      </div>
+    </div>
+    <div class="scale-metrics-grid">
+      <div class="scale-metric-box">
+        <b class="num" id="simWaterLiters">722,716,170 L</b>
+        <span>On-site cooling water saved per year</span>
+      </div>
+      <div class="scale-metric-box">
+        <b class="num" id="simPools">289 Pools</b>
+        <span>Olympic swimming pools of freshwater saved</span>
+      </div>
+      <div class="scale-metric-box">
+        <b class="num" id="simCarbon">83,878 Tons</b>
+        <span>Metric tons of CO₂ eliminated from PJM grid</span>
+      </div>
+      <div class="scale-metric-box">
+        <b class="num" id="simCars">208M Miles</b>
+        <span>Gasoline passenger car miles avoided</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Neal.fun Style Virginia Public Impact & Gamification Experience -->
+  <section class="neal-section reveal">
+    <!-- Live Real-Time Evaporation & Conservation Ticker -->
+    <div class="ticker-banner">
+      <div class="ticker-pulse">
+        <span class="pulse-dot"></span>
+        <span>Real-Time Ashburn Evaporation Clock</span>
+      </div>
+      <div class="ticker-stats">
+        <div class="ticker-item">
+          <span>Standard Towers:</span>
+          <b id="liveSecLiters">0 L</b>
+          <span style="font-size:0.75rem;">evaporated</span>
+        </div>
+        <div class="ticker-item">
+          <span style="color:#34d399;">Wetbulb Saves:</span>
+          <b id="liveSecSaved" style="color:#34d399;">0 L</b>
+          <span style="font-size:0.75rem;">retained</span>
+        </div>
+        <div class="ticker-item">
+          <span>Elapsed:</span>
+          <b id="liveTickerSec">0s</b>
+        </div>
+      </div>
+    </div>
+
+    <!-- Neal.fun Public Impact 3D Flip Card Grid -->
+    <div class="card reveal" style="display:flex;flex-direction:column;gap:16px;">
+      <div class="card-head">
+        <div>
+          <h2>🎮 Community Impact Explorer (Neal.fun Mode)</h2>
+          <span class="hint">Click or hover any card to flip and discover the tangible local Virginia equivalency</span>
+        </div>
+        <div class="workload-slider-box">
+          <span class="label" style="white-space:nowrap;">Shift Batch AI Capacity:</span>
+          <b class="num" id="flexPctVal" style="color:#38bdf8;min-width:40px;">15%</b>
+          <input class="plain" type="range" id="flexSlider" min="5" max="50" step="1" value="15" style="width:140px;" aria-label="Flexible workload percentage">
+        </div>
+      </div>
+
+      <div class="neal-grid">
+        <!-- Card 1: Olympic Swimming Pools -->
+        <div class="flip-card" onclick="this.classList.toggle('flipped')">
+          <div class="flip-card-inner">
+            <div class="flip-front" style="--accent:#38bdf8;">
+              <div class="icon-row"><span class="icon">🏊</span><span class="badge">FRESHWATER</span></div>
+              <div>
+                <b class="num" id="impPools">289 Pools</b>
+                <div class="desc">Olympic swimming pools of pure freshwater saved annually</div>
+              </div>
+              <span class="hint">Click to flip details ↻</span>
+            </div>
+            <div class="flip-back">
+              <h4>🏊 Olympic Scale Comparison</h4>
+              <p>An Olympic swimming pool holds 2.5 million liters (660,000 gallons). 289 pools laid end-to-end span 14.5 kilometers — stretching from Dulles Airport past Tysons Corner.</p>
+              <span class="foot">Virginia Hyperscale Fleet</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Loudoun County Showers -->
+        <div class="flip-card" onclick="this.classList.toggle('flipped')">
+          <div class="flip-card-inner">
+            <div class="flip-front" style="--accent:#34d399;">
+              <div class="icon-row"><span class="icon">🚿</span><span class="badge">CITIZEN USE</span></div>
+              <div>
+                <b class="num" id="impShowers">9.6M Showers</b>
+                <div class="desc">Standard 8-minute hot showers conserved for local families</div>
+              </div>
+              <span class="hint">Click to flip details ↻</span>
+            </div>
+            <div class="flip-back">
+              <h4>🚿 Loudoun County Showers</h4>
+              <p>A standard shower head consumes ~75 liters. This savings covers daily showers for all 430,000 Loudoun County residents for 74 continuous days during summer drought season.</p>
+              <span class="foot">EPA WaterSense Metric</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: Potomac Drinking Water -->
+        <div class="flip-card" onclick="this.classList.toggle('flipped')">
+          <div class="flip-card-inner">
+            <div class="flip-front" style="--accent:#0284c7;">
+              <div class="icon-row"><span class="icon">🚰</span><span class="badge">POTABLE TAP</span></div>
+              <div>
+                <b class="num" id="impResidents">142,000 People</b>
+                <div class="desc">Annual municipal drinking water supply protected in Loudoun</div>
+              </div>
+              <span class="hint">Click to flip details ↻</span>
+            </div>
+            <div class="flip-back">
+              <h4>🚰 Potomac & Goose Creek</h4>
+              <p>Data centers draw from the same municipal reservoirs that supply drinking water. Wetbulb eliminates evaporation spikes during low-flow Potomac drought advisories.</p>
+              <span class="foot">Loudoun Water Authority</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4: Water Bottles to the Moon -->
+        <div class="flip-card" onclick="this.classList.toggle('flipped')">
+          <div class="flip-card-inner">
+            <div class="flip-front" style="--accent:#a78bfa;">
+              <div class="icon-row"><span class="icon">🥤</span><span class="badge">BOTTLED UNITS</span></div>
+              <div>
+                <b class="num" id="impBottles">1.44B Bottles</b>
+                <div class="desc">Standard 500ml water bottles preserved from evaporation</div>
+              </div>
+              <span class="hint">Click to flip details ↻</span>
+            </div>
+            <div class="flip-back">
+              <h4>🥤 3.7x to the Moon</h4>
+              <p>1.44 billion 500ml water bottles stacked end-to-end reach 289,000 kilometers into the sky — more than 75% of the distance from the Earth all the way to the Moon!</p>
+              <span class="foot">Neal.fun Space Scale</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 5: Virginia Pine Forest -->
+        <div class="flip-card" onclick="this.classList.toggle('flipped')">
+          <div class="flip-card-inner">
+            <div class="flip-front" style="--accent:#10b981;">
+              <div class="icon-row"><span class="icon">🌲</span><span class="badge">FOREST SINK</span></div>
+              <div>
+                <b class="num" id="impTrees">3.81M Trees</b>
+                <div class="desc">Carbon sequestration equivalent of mature Virginia pine trees</div>
+              </div>
+              <span class="hint">Click to flip details ↻</span>
+            </div>
+            <div class="flip-back">
+              <h4>🌲 Virginia Loblolly Pine Forest</h4>
+              <p>Eliminating 83,878 metric tons of CO₂ from PJM's peaker plants has the exact same climate cooling impact as planting 19,000 acres of dense Appalachian forest.</p>
+              <span class="foot">USFS Carbon Sequestration</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 6: Route 28 Traffic Avoided -->
+        <div class="flip-card" onclick="this.classList.toggle('flipped')">
+          <div class="flip-card-inner">
+            <div class="flip-front" style="--accent:#f59e0b;">
+              <div class="icon-row"><span class="icon">🚗</span><span class="badge">HIGHWAY MILES</span></div>
+              <div>
+                <b class="num" id="impCars">18,200 Cars</b>
+                <div class="desc">Gasoline passenger vehicles removed from Virginia roads</div>
+              </div>
+              <span class="hint">Click to flip details ↻</span>
+            </div>
+            <div class="flip-back">
+              <h4>🚗 Route 28 & Dulles Commute</h4>
+              <p>Avoiding 208 million passenger vehicle miles of exhaust each year equals permanently taking 18,200 gas cars off the congested Dulles Greenway and Route 28 corridors.</p>
+              <span class="foot">EPA Greenhouse Equivalency</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Neal.fun Interactive Reservoir Mini-Game Widget -->
+      <div class="reservoir-card">
+        <div class="reservoir-controls">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:1.4rem;">🏊</span>
+            <h3 style="margin:0;font:800 1.15rem var(--display);">Goose Creek Reservoir Buffer</h3>
+          </div>
+          <p style="margin:0;font-size:0.84rem;color:var(--muted);line-height:1.4;">
+            Every flexible batch job scheduled during night economizer windows acts like pouring fresh water directly back into the community reservoir.
+          </p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
+            <button class="btn-game" id="btnPourWater">💧 Pour 10,000 L to Reservoir</button>
+            <button class="btn-game" id="btnResetReservoir" style="background:rgba(255,255,255,0.08);border-color:var(--line);">↺ Reset</button>
+          </div>
+          <div class="hotspot-pills">
+            <span class="hotspot-pill active" data-spot="ashburn">📍 Ashburn Alley (4.0 GW)</span>
+            <span class="hotspot-pill" data-spot="potomac">📍 Potomac Intake</span>
+            <span class="hotspot-pill" data-spot="goose">📍 Goose Creek Dam</span>
+            <span class="hotspot-pill" data-spot="peaker">📍 Possum Point Peaker</span>
+          </div>
+        </div>
+
+        <div class="reservoir-tank-wrap">
+          <div class="reservoir-label">
+            <span id="reservoirStatus">Reservoir Level: 68% (Safe Buffer)</span>
+            <span id="reservoirVolume">+0 Liters Poured</span>
+          </div>
+          <div class="reservoir-water" id="reservoirWater"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Evidence Section: What Real Virginia Data Shows -->
+  <div class="section-title reveal">
+    <h2 id="evidenceTitle">What 1,016 real days of Virginia data prove</h2>
+    <p>Every single hour of PJM's fuel mix cross-matched with Ashburn's hourly thermodynamics, backtested against real compute schedules.</p>
+  </div>
+
+  <section class="stats">
+    <div class="card stat reveal">
+      <b class="num w" id="sOnsite">24.3%</b>
+      <span>on-site cooling water saved by Wetbulb</span>
+    </div>
+    <div class="card stat reveal">
+      <b class="num c" id="sCarbonOnly">3.0%</b>
+      <span>saved by carbon-only scheduling (standard today)</span>
+    </div>
+    <div class="card stat reveal">
+      <b class="num g" id="sGallons">191M</b>
+      <span>gallons of cooling water saved annually at VA scale</span>
+    </div>
+    <div class="card stat reveal">
+      <b class="num" id="sConflict">66.0%</b>
+      <span>of days, cleanest hours & least-thirsty hours conflict</span>
+    </div>
+  </section>
+
+  <section class="grid">
+    <article class="card span4 reveal">
+      <h2>Water Consumption by Strategy</h2>
+      <svg class="mini" id="barsChart" viewBox="0 0 400 230" role="img" aria-label="Water per job by policy"></svg>
+    </article>
+    <article class="card span4 reveal">
+      <h2>Ashburn Summer Diurnal Cycle</h2>
+      <svg class="mini" id="rhythmChart" viewBox="0 0 400 230" role="img" aria-label="Summer daily rhythm of carbon and water"></svg>
+    </article>
+    <article class="card span4 reveal">
+      <h2>The Pareto Trade-off Frontier</h2>
+      <svg class="mini" id="tradeChart" viewBox="0 0 400 230" role="img" aria-label="Trade-off between water and carbon"></svg>
+    </article>
+  </section>
+
+  <section class="how">
+    <article class="card reveal">
+      <span class="step">01 · INTAKE THERMODYNAMICS</span>
+      <h3>Reading Ashburn's Air</h3>
+      <p>Cooling towers don't care about ambient thermometer temperature. They care about <b>wet-bulb temperature</b> — the temperature water reaches by evaporating. Below 10°C wet-bulb, dry economizers run with <em>zero water</em>. Above 22°C, sprayers gulp gallons just to keep GPU clusters below thermal limits.</p>
+    </article>
+    <article class="card reveal">
+      <span class="step">02 · THE 66% CLIMATE PARADOX</span>
+      <h3>Why Carbon-Only Fails</h3>
+      <p>Most schedulers optimize for carbon alone. Big mistake. In Virginia, 66% of the time, PJM's cleanest solar/nuclear hours hit around 1 to 2 PM — the exact hottest hour of the afternoon when cooling towers evaporate peak water. Chasing carbon blindly can actually worsen local watershed drought.</p>
+    </article>
+    <article class="card reveal">
+      <span class="step">03 · PRAGMATIC SCHEDULING</span>
+      <h3>Batch Compute Doesn't Mind Waiting</h3>
+      <p>Your team doesn't need checkpoint evaluations or bulk fine-tuning runs to finish at 3:15 PM instead of 11:30 PM. Waiting just 4 to 6 hours for nighttime cool air trims ~24% off on-site water consumption without buying new chillers or dropping GPU clocks.</p>
+    </article>
+  </section>
+
+  <p class="sources reveal" id="sources"></p>
+</div>
+
+<!-- Export Modal -->
+<div class="modal-backdrop" id="exportModal" aria-hidden="true">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2>Export AI Dispatch Schedule</h2>
+      <span class="close-btn" id="closeExportModal">&times;</span>
+    </div>
+    <p style="color:var(--muted);font-size:0.9rem;margin:0;">
+      Deploy this dispatch window directly to your Kubernetes cluster or Slurm high-performance computing queue.
+    </p>
+    <div class="code-snippet" id="exportCode">// Generating dispatch config...</div>
+    <div style="display:flex;justify-content:flex-end;gap:10px;">
+      <button class="btn" id="copyExportBtn">Copy Script</button>
+      <button class="btn primary" id="doneExportBtn">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- Help Modal -->
+<div class="modal-backdrop" id="helpModal" aria-hidden="true">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2>Keyboard Shortcuts & Rack Controls</h2>
+      <span class="close-btn" id="closeHelpModal">&times;</span>
+    </div>
+    <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px;font-size:0.9rem;">
+      <li style="display:flex;justify-content:space-between;"><span>Play / Stop historical replay</span><span class="kbd">Space</span></li>
+      <li style="display:flex;justify-content:space-between;"><span>Cycle historical Virginia days</span><span class="kbd">← →</span></li>
+      <li style="display:flex;justify-content:space-between;"><span>Adjust Priority (Carbon vs Water)</span><span class="kbd">↑ ↓</span></li>
+      <li style="display:flex;justify-content:space-between;"><span>Connect physical Arduino rack</span><span class="kbd">C</span></li>
+      <li style="display:flex;justify-content:space-between;"><span>Toggle demo sensor sliders</span><span class="kbd">D</span></li>
+      <li style="display:flex;justify-content:space-between;"><span>Toggle full screen</span><span class="kbd">F</span></li>
+      <li style="display:flex;justify-content:space-between;"><span>Export schedule configuration</span><span class="kbd">E</span></li>
+      <li style="display:flex;justify-content:space-between;"><span>Help modal</span><span class="kbd">?</span></li>
+    </ul>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span id="toastIcon">✨</span><span id="toastText"></span></div>
+
+<script>
+document.documentElement.classList.add("js");
+
+// =====================================================================
+// Scientific model (calibrated with Kaggle ERA5 + PJM analysis)
+// =====================================================================
+const LAT = 39.04, LON = -77.49, REPLAY_MS = 30000;
+const PAGE_NAMES = ["STATUS", "AIR", "WETBLB", "WATER", "CO2", "FOCUS"];
+const PAGE_CARDS = ["cardDecision", "cardAir", "cardAir", "cardTimeline", "cardTimeline", "cardTimeline"];
+
+const WORKLOAD_PRESETS = {
+  inference: { name: "Batch Inference", hours: 4, kw: 500, label: "4-hour AI batch at 500 kW" },
+  training:  { name: "LLM Pretrain",   hours: 8, kw: 10000, label: "8-hour LLM pretrain at 10 MW" },
+  diffusion: { name: "Video Gen",      hours: 6, kw: 2000, label: "6-hour generative video at 2 MW" },
+  finetune:  { name: "Fine-Tuning",    hours: 3, kw: 1000, label: "3-hour fine-tuning at 1 MW" }
+};
+
+const S = {
+  results: null, profile: null, replay: [], forecast: null, sensor: null, demo: false,
+  jobH: 4, jobKw: 500, workload: "inference", scaleMode: "single",
+  w: 0.5, mode: "live", dayIdx: 0, rt: 0, playing: false, timer: null, choice: 0,
+  writer: null, lastSent: "", lastSentAt: 0, lcd: ["~WETBULB", "        "], fan: 0, page: 0,
+  race: { nOn: 0, nKg: 0, wOn: 0, wKg: 0 }, heat: -1, intensity: 0.2, ser: null, hoverI: null,
+  showWater: true, showCarbon: true, showEco: true, weatherPreset: "live"
+};
+
+const $ = id => document.getElementById(id);
+const avg = a => a.reduce((s, v) => s + v, 0) / (a.length || 1);
+const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+
+// Stull formula for wet-bulb temperature from air temp and relative humidity
+function stull(t, rh) {
+  rh = clamp(rh, 1, 100);
+  return t * Math.atan(0.151977 * Math.sqrt(rh + 8.313659)) + Math.atan(t + rh) - Math.atan(rh - 1.676331)
+    + 0.00391838 * Math.pow(rh, 1.5) * Math.atan(0.023101 * rh) - 4.686035;
+}
+
+// Data center cooling tower Water Usage Effectiveness (WUE, L/kWh)
+// Below 10°C wet-bulb, data centers operate in 100% dry economizer (free cooling, 0 L water)
+const wue = twb => clamp(0.15 * (twb - 10), 0, 3);
+
+function bestStart(score, duration = S.jobH) {
+  let best = 0, bv = Infinity;
+  for (let s = 0; s <= score.length - duration; s++) {
+    let m = 0;
+    for (let k = 0; k < duration; k++) m += score[s + k];
+    if (m < bv - 1e-9) { bv = m; best = s; }
+  }
+  return best;
+}
+
+function choose(C, W, w, duration = S.jobH) {
+  const mc = avg(C) || 1, mw = avg(W) || 1;
+  return bestStart(C.map((c, i) => w * c / mc + (1 - w) * W[i] / mw), duration);
+}
+
+const win = (arr, s, duration = S.jobH) => avg(arr.slice(s, s + duration));
+const pctSaved = (base, val) => base > 1e-9 ? 100 * (1 - val / base) : 0;
+const fanFor = water => water <= 0 ? 100 : Math.round(90 + 165 * Math.min(water, 3) / 3);
+const hourLabel = h => (h % 12 || 12) + (h < 12 ? "AM" : "PM");
+
+// =====================================================================
+// Number Animations & Formatters
+// =====================================================================
+const tweens = new Map();
+function setNum(el, to, fmt, dur = 600) {
+  if (typeof el === "string") el = $(el);
+  if (!el) return;
+  const cur = tweens.get(el);
+  if (cur && cur.to === to) return;
+  if (!cur && el._val === to) return;
+  const from = cur ? cur.value : (el._val ?? 0);
+  tweens.set(el, { from, to, t0: performance.now(), dur, fmt, value: from });
+}
+function stepTweens(now) {
+  for (const [el, t] of tweens) {
+    const k = clamp((now - t.t0) / t.dur, 0, 1), e = 1 - Math.pow(1 - k, 3);
+    t.value = lerp(t.from, t.to, e);
+    el.textContent = t.fmt(t.value);
+    el._val = t.value;
+    if (k >= 1) { el._val = t.to; tweens.delete(el); }
+  }
+}
+const fmtPct = v => Math.abs(v) < 0.5 ? "0%" : (v > 0 ? "−" : "+") + Math.abs(v).toFixed(0) + "%";
+const fmtL = v => Math.max(0, Math.round(v)).toLocaleString() + " L";
+
+// =====================================================================
+// Data Loading & API Sync
+// =====================================================================
+async function loadData() {
+  if (window.WETBULB_DATA) {
+    ({ results: S.results, profile: S.profile, replay: S.replay } = window.WETBULB_DATA);
+    return;
+  }
+  const get = async p => (await fetch(p, { cache: "no-store" })).json();
+  [S.results, S.profile, S.replay] = await Promise.all([
+    get("../outputs/results.json"), get("../outputs/wetbulb_profile.json"), get("../outputs/replay_days.json")]);
+}
+
+async function loadForecast() {
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
+    "&hourly=temperature_2m,relative_humidity_2m,wet_bulb_temperature_2m&forecast_days=2&timezone=America%2FNew_York";
+  try {
+    const js = await (await fetch(url)).json();
+    const nowLocal = new Date(Date.now() + js.utc_offset_seconds * 1000).toISOString().slice(0, 13) + ":00";
+    let i0 = js.hourly.time.indexOf(nowLocal);
+    if (i0 < 0) i0 = 0;
+    S.forecast = js.hourly.time.slice(i0, i0 + 24).map((t, k) => {
+      const i = i0 + k, temp = js.hourly.temperature_2m[i], rh = js.hourly.relative_humidity_2m[i];
+      return { hour: +t.slice(11, 13), label: hourLabel(+t.slice(11, 13)), temp, rh,
+        twb: js.hourly.wet_bulb_temperature_2m[i] ?? stull(temp, rh) };
+    });
+    if (!S.sensor) $("airSource").textContent = "live forecast";
+  } catch (e) {
+    const now = new Date(), m = now.getMonth() + 1;
+    S.forecast = Array.from({ length: 24 }, (_, k) => {
+      const h = (now.getHours() + k) % 24, mh = S.profile ? S.profile.month_hour[`${m}-${h}`] : null;
+      return { hour: h, label: hourLabel(h), temp: 22, rh: 50, twb: mh ? mh.twb : 12 };
+    });
+    if (!S.sensor) $("airSource").textContent = "typical profile";
+  }
+}
+
+function getSeries() {
+  if (S.mode === "replay") {
+    return S.replay[S.dayIdx].hours.map(h => ({ ...h, hour: +h.t.slice(11, 13) }));
+  }
+  
+  // Synthetic Weather Presets for instant interactive testing
+  if (S.weatherPreset === "heatwave") {
+    return Array.from({ length: 24 }, (_, h) => {
+      const temp = 28 + 9 * Math.sin((h - 8) / 24 * Math.PI * 2);
+      const rh = 65 - 20 * Math.sin((h - 8) / 24 * Math.PI * 2);
+      const twb = stull(temp, rh);
+      const cw = wue(twb);
+      const ci = 480 + 70 * Math.sin((h - 14) / 24 * Math.PI * 2);
+      return { label: hourLabel(h), hour: h, temp, rh, twb, ci, gw: 2.1, wue: cw, water: cw + 2.1 };
+    });
+  }
+  if (S.weatherPreset === "humid") {
+    return Array.from({ length: 24 }, (_, h) => {
+      const temp = 27 + 4 * Math.sin((h - 8) / 24 * Math.PI * 2);
+      const rh = 88;
+      const twb = stull(temp, rh);
+      const cw = wue(twb);
+      const ci = 460 + 50 * Math.sin((h - 12) / 24 * Math.PI * 2);
+      return { label: hourLabel(h), hour: h, temp, rh, twb, ci, gw: 2.05, wue: cw, water: cw + 2.05 };
+    });
+  }
+  if (S.weatherPreset === "winter") {
+    return Array.from({ length: 24 }, (_, h) => {
+      const temp = -2 + 4 * Math.sin((h - 8) / 24 * Math.PI * 2);
+      const rh = 45;
+      const twb = stull(temp, rh);
+      const cw = 0; // 100% free cooling
+      const ci = 520 + 40 * Math.sin((h - 18) / 24 * Math.PI * 2);
+      return { label: hourLabel(h), hour: h, temp, rh, twb, ci, gw: 2.15, wue: cw, water: 2.15 };
+    });
+  }
+
+  // Live forecast series
+  return S.forecast.map((f, i) => {
+    const useSensor = i === 0 && S.sensor;
+    const twb = useSensor ? S.sensor.twb : f.twb;
+    const g = S.profile && S.profile.recent_grid_by_hour ? S.profile.recent_grid_by_hour[String(f.hour)] : { ci: 460, gw: 2.05 };
+    const cw = wue(twb);
+    return { label: f.label, hour: f.hour, twb, temp: useSensor ? S.sensor.temp : f.temp,
+      rh: useSensor ? S.sensor.rh : f.rh, ci: g.ci, gw: g.gw, wue: cw, water: cw + g.gw };
+  });
+}
+
+// =====================================================================
+// Main Render Loop
+// =====================================================================
+function render() {
+  if (!S.profile || !S.forecast) return;
+  const ser = getSeries();
+  S.ser = ser;
+  const C = ser.map(x => x.ci), W = ser.map(x => x.water), U = ser.map(x => x.wue);
+  
+  const s = S.mode === "live"
+    ? choose(C, W, S.w, S.jobH)
+    : choose(ser.map(x => x.pred_ci || x.ci), ser.map(x => x.pred_water || x.water), S.w, S.jobH);
+  S.choice = s;
+
+  const dec = $("decision");
+  const endHourLabel = ser[(s + S.jobH) % 24].label;
+  const html = s === 0
+    ? `<span class="go">Run now.</span> Lowest environmental cost window.`
+    : `Wait ${s} hour${s > 1 ? "s" : ""}. <span class="go">Run ${ser[s].label}–${endHourLabel}.</span>`;
+  
+  if (dec._html !== html) {
+    dec.innerHTML = html;
+    dec._html = html;
+    dec.className = "decision" + (s === 0 ? " run" : "");
+  }
+
+  const freeCool = U.every(v => v === 0);
+  const curTwb = ser[s].twb;
+  
+  if (S.mode === "live") {
+    $("decisionSub").textContent = freeCool
+      ? "Free dry-cooling available across all hours: Ashburn's cool ambient air requires 0 L/kWh chiller water, so today Wetbulb optimizes clean renewable power. Switch to Summer Heatwave above to see water savings."
+      : `Optimal window saves both water and carbon by avoiding peak evaporative heat and fossil peaker plant spikes. (Job power: ${(S.jobKw >= 1000 ? (S.jobKw/1000).toFixed(1) + " MW" : S.jobKw + " kW")}, duration: ${S.jobH}h).`;
+  } else {
+    $("decisionSub").textContent = `Replaying ${S.replay[S.dayIdx].label}: Real weather & PJM fuel mix, scheduled only with knowledge available at 9 AM submit time.`;
+  }
+
+  $("decisionLabel").textContent = `${S.mode === "live" ? "Next 24 hours" : "Historical Replay"} · a ${S.jobH}-hour AI job at ${(S.jobKw >= 1000 ? (S.jobKw/1000).toFixed(0) + " MW" : S.jobKw + " kW")}`;
+
+  const curJobSavedLiters = (win(U, 0, S.jobH) - win(U, s, S.jobH)) * S.jobKw * S.jobH;
+  setNum("chipOnsite", pctSaved(win(U, 0, S.jobH), win(U, s, S.jobH)), fmtPct);
+  setNum("chipWater", pctSaved(win(W, 0, S.jobH), win(W, s, S.jobH)), fmtPct);
+  setNum("chipCo2", pctSaved(win(C, 0, S.jobH), win(C, s, S.jobH)), fmtPct);
+  setNum("chipLiters", Math.max(0, curJobSavedLiters), fmtL);
+
+  drawChart(ser, s, S.mode === "live" ? null : S.rt);
+  $("timelineTitle").textContent = S.mode === "live"
+    ? `The next 24 hours in Ashburn · ${WORKLOAD_PRESETS[S.workload].name}`
+    : `${S.replay[S.dayIdx].title} · ${S.replay[S.dayIdx].label}`;
+
+  const currentHourData = ser[S.mode === "live" ? 0 : clamp(Math.floor(S.rt), 0, 23)];
+  renderAir(currentHourData);
+  updateRack(ser, s);
+  updateScaleSimulator(curJobSavedLiters);
+
+  const w = Math.round(S.w * 100);
+  $("weight").value = 100 - w;
+  updateSliderBubble(100 - w);
+  $("focusNote").textContent = w === 50
+    ? "Equal weight · 50% carbon reduction / 50% water conservation"
+    : w > 50
+      ? `Carbon weighted ${w}% · Water ${100 - w}%`
+      : `Water weighted ${100 - w}% · Carbon ${w}%`;
+}
+
+// ---------- Thermodynamic Air & Cooling Mode Indicator ----------
+function renderAir(h) {
+  setNum("airTwb", h.twb, v => v.toFixed(1), 500);
+  $("airTemp").textContent = h.temp != null ? h.temp.toFixed(1) + " °C" : "–";
+  $("airRh").textContent = h.rh != null ? Math.round(h.rh) + "%" : "–";
+  setNum("airWue", wue(h.twb), v => v.toFixed(2) + " L/kWh", 500);
+  setNum("airCo2", h.ci, v => Math.round(v) + " g/kWh", 500);
+  drawGauge(h.twb);
+
+  // Cooling Mode Pill update
+  const pill = $("coolingModePill");
+  const modeText = $("coolingModeText");
+  if (h.twb <= 10) {
+    pill.className = "cooling-mode-pill free";
+    modeText.textContent = "❄️ 100% Free Air Economizer (0 L/kWh water)";
+  } else if (h.twb <= 20) {
+    pill.className = "cooling-mode-pill";
+    modeText.textContent = `💧 Hybrid Evaporative Assist (${wue(h.twb).toFixed(2)} L/kWh)`;
+  } else {
+    pill.className = "cooling-mode-pill stress";
+    modeText.textContent = `⚠️ Peak Evaporative Stress (${wue(h.twb).toFixed(2)} L/kWh water)`;
+  }
+
+  S.intensity = wue(h.twb) / 3;
+  setMood(clamp((h.twb + 5) / 32, 0, 1));
+}
+
+function setMood(heat) {
+  if (Math.abs(heat - S.heat) < 0.02) return;
+  S.heat = heat;
+  const mix = (a, b) => `rgb(${a.map((v, i) => Math.round(lerp(v, b[i], heat))).join(",")})`;
+  const r = document.documentElement.style;
+  r.setProperty("--aura1", mix([14, 165, 233], [249, 115, 22]));
+  r.setProperty("--aura2", mix([16, 185, 129], [239, 68, 68]));
+  r.setProperty("--aura3", mix([99, 102, 241], [251, 191, 36]));
+}
+
+// ---------- Modern SVG Wet-Bulb Gauge ----------
+function drawGauge(twb) {
+  if ($("gauge")._v === Math.round(twb * 10)) return;
+  $("gauge")._v = Math.round(twb * 10);
+  const cx = 150, cy = 115, R = 98, a0 = -210, a1 = 30;
+  const t = clamp((twb + 10) / 40, 0, 1);
+  const pol = a => [cx + R * Math.cos(a * Math.PI / 180), cy + R * Math.sin(a * Math.PI / 180)];
+  const arc = (from, to) => {
+    const [x0, y0] = pol(from), [x1, y1] = pol(to);
+    return `M${x0},${y0} A${R},${R} 0 ${to - from > 180 ? 1 : 0} 1 ${x1},${y1}`;
+  };
+  const av = lerp(a0, a1, Math.max(t, 0.002)), [px, py] = pol(av);
+  const free = pol(lerp(a0, a1, 20 / 40));
+  const mono = 'font-family="JetBrains Mono, monospace"';
+
+  $("gauge").innerHTML = `<defs>
+      <linearGradient id="gg" x1="0" x2="1">
+        <stop offset="0%" stop-color="#34d399"/>
+        <stop offset="40%" stop-color="#38bdf8"/>
+        <stop offset="75%" stop-color="#fbbf24"/>
+        <stop offset="100%" stop-color="#f97316"/>
+      </linearGradient>
+      <filter id="gaugeGlow" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur stdDeviation="6"/>
+      </filter>
+    </defs>
+    <path d="${arc(a0, a1)}" stroke="rgba(255,255,255,.07)" stroke-width="14" fill="none" stroke-linecap="round"/>
+    <path d="${arc(a0, av)}" stroke="url(#gg)" stroke-width="14" fill="none" stroke-linecap="round" filter="url(#gaugeGlow)" opacity=".7"/>
+    <path d="${arc(a0, av)}" stroke="url(#gg)" stroke-width="14" fill="none" stroke-linecap="round"/>
+    <circle cx="${free[0]}" cy="${free[1]}" r="3.5" fill="#6ee7b7"/>
+    <text x="${free[0]}" y="${free[1] - 14}" fill="#34d399" font-size="10" font-weight="700" text-anchor="middle" ${mono}>FREE COOLING ≤10°</text>
+    <circle cx="${px}" cy="${py}" r="16" fill="#ffffff" opacity=".18"/>
+    <circle cx="${px}" cy="${py}" r="7" fill="#ffffff"/>
+    <text x="${pol(a0)[0]}" y="${pol(a0)[1] + 24}" fill="#8493b8" font-size="11" text-anchor="middle" ${mono}>-10°C</text>
+    <text x="${pol(a1)[0]}" y="${pol(a1)[1] + 24}" fill="#8493b8" font-size="11" text-anchor="middle" ${mono}>30°C</text>`;
+}
+
+// =====================================================================
+// Rich Environmental Timeline Chart
+// =====================================================================
+const CH = { Wd: 1000, H: 255, L: 64, R: 64, T: 40, B: 34 };
+function drawChart(ser, s, nowT) {
+  const { Wd, H, L, R, T, B } = CH;
+  const n = ser.length, cw = (Wd - L - R) / n;
+  const x = i => L + i * cw + cw / 2;
+  const ci = ser.map(v => v.ci), wa = ser.map(v => v.wue);
+  
+  let cLo = Math.min(...ci), cHi = Math.max(...ci);
+  const pad = Math.max(20, (cHi - cLo) * 0.18);
+  cLo = Math.max(0, cLo - pad); cHi += pad;
+  const wHi = Math.max(0.5, Math.max(...wa) * 1.25);
+  
+  const yc = v => T + (H - T - B) * (1 - (v - cLo) / (cHi - cLo || 1));
+  const yw = v => T + (H - T - B) * (1 - v / wHi);
+
+  // Normalized Combined Eco Score (0% = cleanest & least thirsty, 100% = dirtiest & most thirsty)
+  const mc = avg(ci) || 1, mw = avg(wa) || 1;
+  const ecoScores = ser.map(v => (S.w * v.ci / mc + (1 - S.w) * v.wue / mw));
+  const eLo = Math.min(...ecoScores), eHi = Math.max(...ecoScores);
+  const ye = v => T + (H - T - B) * (1 - (v - eLo) / (eHi - eLo || 1));
+
+  const smooth = (arr, y) => {
+    const pts = arr.map((v, i) => [x(i), y(v)]);
+    let d = `M${pts[0][0]},${pts[0][1]}`;
+    for (let i = 1; i < pts.length; i++) {
+      const [x0, y0] = pts[i - 1], [x1, y1] = pts[i], mx = (x0 + x1) / 2;
+      d += ` C${mx},${y0} ${mx},${y1} ${x1},${y1}`;
+    }
+    return d;
+  };
+
+  const mono = 'font-family="JetBrains Mono, monospace" font-size="11"';
+  
+  // Background Grid Lines
+  let g = "";
+  for (let k = 0; k <= 4; k++) {
+    const yy = T + (H - T - B) * k / 4;
+    g += `<line x1="${L}" x2="${Wd - R}" y1="${yy}" y2="${yy}" stroke="rgba(148, 163, 214, 0.08)"/>` +
+      `<text x="${L - 10}" y="${yy + 4}" fill="#c4b5fd" text-anchor="end" ${mono}>${Math.round(cHi - (cHi - cLo) * k / 4)}</text>` +
+      `<text x="${Wd - R + 10}" y="${yy + 4}" fill="#7dd3fc" ${mono}>${(wHi - wHi * k / 4).toFixed(1)}</text>`;
+  }
+  g += `<text x="${L - 10}" y="${T - 22}" fill="#c4b5fd" text-anchor="end" ${mono}>g CO₂</text>` +
+       `<text x="${Wd - R + 10}" y="${T - 22}" fill="#7dd3fc" ${mono}>L H₂O</text>`;
+
+  // Timeline Hour Labels
+  let labels = "";
+  ser.forEach((v, i) => {
+    if (i % 3 === 0) labels += `<text x="${x(i)}" y="${H - 10}" fill="#8493b8" text-anchor="middle" ${mono}>${v.label}</text>`;
+  });
+
+  const duration = S.jobH;
+  const bx = s0 => L + s0 * cw, bw = cw * duration, bh = H - T - B;
+
+  // Now indicator line (in replay mode)
+  let now = "";
+  if (nowT != null) {
+    const nx = L + clamp(nowT, 0, n) * cw;
+    now = `<rect x="${Math.max(L, nx - 80)}" y="${T}" width="${nx - Math.max(L, nx - 80)}" height="${bh}" fill="url(#comet)"/>` +
+          `<line x1="${nx}" x2="${nx}" y1="${T - 8}" y2="${H - B}" stroke="#fde68a" stroke-width="2.5"/>` +
+          `<circle cx="${nx}" cy="${T - 8}" r="5" fill="#fde68a" filter="url(#glow)"/>`;
+  }
+
+  // Paths
+  const waterArea = S.showWater ? `<path d="${smooth(wa, yw)} L${x(n - 1)},${yw(0)} L${x(0)},${yw(0)} Z" fill="url(#wa)"/>` : "";
+  const carbonLine = S.showCarbon ? `<path d="${smooth(ci, yc)}" fill="none" stroke="#a78bfa" stroke-width="3" filter="url(#glow)"/>` : "";
+  const waterLine = S.showWater ? `<path d="${smooth(wa, yw)}" fill="none" stroke="#38bdf8" stroke-width="3.2" filter="url(#glow)"/>` : "";
+  const ecoLine = S.showEco ? `<path d="${smooth(ecoScores, ye)}" fill="none" stroke="#34d399" stroke-width="2.5" stroke-dasharray="4 3" opacity=".8"/>` : "";
+
+  // Free cooling indicator baseline
+  const freeCoolY = yw(0);
+  const freeCoolLine = `<line x1="${L}" x2="${Wd - R}" y1="${freeCoolY}" y2="${freeCoolY}" stroke="rgba(52, 211, 153, 0.4)" stroke-dasharray="2 4" stroke-width="1.5"/>` +
+    `<text x="${Wd - R - 10}" y="${freeCoolY - 6}" fill="#34d399" font-size="9" text-anchor="end" ${mono}>FREE COOLING (0 L/kWh)</text>`;
+
+  $("chart").innerHTML = `<defs>
+      <linearGradient id="wa" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#0284c7" stop-opacity=".45"/>
+        <stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/>
+      </linearGradient>
+      <linearGradient id="pk" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#10b981" stop-opacity=".35"/>
+        <stop offset="100%" stop-color="#059669" stop-opacity=".08"/>
+      </linearGradient>
+      <linearGradient id="comet" x1="0" x2="1">
+        <stop offset="0%" stop-color="#fde68a" stop-opacity="0"/>
+        <stop offset="100%" stop-color="#fde68a" stop-opacity=".25"/>
+      </linearGradient>
+      <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur stdDeviation="4" result="b"/>
+        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>` + g + freeCoolLine +
+    `<rect x="${bx(0)}" y="${T}" width="${bw}" height="${bh}" rx="12" fill="rgba(203,213,225,.07)" stroke="rgba(203,213,225,.22)"/>` +
+    `<rect x="${bx(s)}" y="${T}" width="${bw}" height="${bh}" rx="12" fill="url(#pk)" stroke="#34d399" stroke-width="2" stroke-dasharray="7 5"/>` +
+    `<text x="${bx(0) + 12}" y="${T + 20}" fill="#94a3b8" ${mono}>Standard: Run now</text>` +
+    `<text x="${bx(s) + 12}" y="${T + (s === 0 ? 38 : 20)}" fill="#6ee7b7" ${mono} font-weight="700">🍃 Wetbulb Eco Window</text>` +
+    waterArea + carbonLine + waterLine + ecoLine + labels + now + `<g id="hover"></g>`;
+
+  S.chartScale = { x, yc, yw, ye, cw, n };
+  if (S.hoverI != null) drawHover(S.hoverI);
+}
+
+function drawHover(i) {
+  const g = document.getElementById("hover");
+  if (!g || !S.ser || !S.chartScale) return;
+  const { x, yc, yw } = S.chartScale, v = S.ser[i];
+  g.innerHTML = `<line x1="${x(i)}" x2="${x(i)}" y1="${CH.T}" y2="${CH.H - CH.B}" stroke="rgba(255,255,255,.4)" stroke-dasharray="3 4"/>` +
+    `<circle cx="${x(i)}" cy="${yc(v.ci)}" r="6" fill="#a78bfa" stroke="#030712" stroke-width="2"/>` +
+    `<circle cx="${x(i)}" cy="${yw(v.wue)}" r="6" fill="#38bdf8" stroke="#030712" stroke-width="2"/>`;
+
+  const tip = $("tip"), box = $("chartBox").getBoundingClientRect(), svgBox = $("chart").getBoundingClientRect();
+  const px = svgBox.left - box.left + x(i) / CH.Wd * svgBox.width;
+  const isPick = i >= S.choice && i < S.choice + S.jobH;
+  
+  tip.innerHTML = `
+    <div class="tip-head">
+      <b>${v.label}</b>
+      <span class="tip-badge" style="background:${isPick ? 'rgba(52,211,153,0.2);color:#6ee7b7' : 'rgba(255,255,255,0.08);color:#8493b8'}">
+        ${isPick ? 'Optimal Pick ✦' : (v.wue === 0 ? 'Free Cooling ❄️' : 'Standard')}
+      </span>
+    </div>
+    <div class="tip-row"><span>Wet-Bulb Temp</span><span class="num">${v.twb.toFixed(1)} °C</span></div>
+    <div class="tip-row"><span style="color:#7dd3fc">Cooling Water</span><span class="num">${v.wue.toFixed(2)} L/kWh</span></div>
+    <div class="tip-row"><span style="color:#c4b5fd">Grid Carbon</span><span class="num">${Math.round(v.ci)} g/kWh</span></div>
+    <div class="tip-eco-note">
+      <span>${v.wue === 0 ? '🍃 100% dry air cooling, zero water evaporated' : `💧 Cooling load: ~${Math.round(v.wue * S.jobKw)} L/h at ${S.jobKw} kW`}</span>
+    </div>`;
+
+  tip.style.left = clamp(px + 14, 0, box.width - 240) + "px";
+  tip.style.top = "30px";
+  tip.classList.add("show");
+}
+
+$("chartBox").addEventListener("pointermove", e => {
+  if (!S.chartScale) return;
+  const r = $("chart").getBoundingClientRect();
+  const vx = (e.clientX - r.left) / r.width * CH.Wd;
+  if (vx < CH.L || vx > CH.Wd - CH.R) return;
+  S.hoverI = clamp(Math.floor((vx - CH.L) / S.chartScale.cw), 0, S.chartScale.n - 1);
+  drawHover(S.hoverI);
+});
+$("chartBox").addEventListener("pointerleave", () => {
+  S.hoverI = null;
+  $("tip").classList.remove("show");
+  const g = document.getElementById("hover");
+  if (g) g.innerHTML = "";
+});
+
+// =====================================================================
+// Rack Display & Hardware Serial Protocol
+// =====================================================================
+function updateRack(ser, s) {
+  let l1, l2, fan;
+  const U = ser.map(x => x.wue);
+  const h = S.mode === "live" ? 0 : clamp(Math.floor(S.rt), 0, 23);
+  const dur = S.jobH;
+  if (S.mode === "live") {
+    const cur = ser[0];
+    if (s === 0) { l1 = "*RUN NOW"; l2 = "WB " + cur.twb.toFixed(1) + "C"; fan = fanFor(cur.wue); }
+    else { l1 = `WAIT ${s}h`; l2 = `~-${Math.max(0, Math.round(pctSaved(win(U, 0, dur), win(U, s, dur))))}%H2O`; fan = 0; }
+  } else {
+    const running = S.rt >= s && S.rt < s + dur;
+    const done = S.rt >= 24 || S.rt >= s + dur;
+    l1 = String(ser[h].hour).padStart(2, "0") + "h " + (running ? "*RUN" : done ? "DONE" : "WAIT");
+    l2 = `~-${Math.max(0, Math.round(S.race.nOn - S.race.wOn))}L`;
+    fan = running ? fanFor(ser[h].wue) : 0;
+  }
+  S.lcd = [l1.slice(0, 8), l2.slice(0, 8)];
+  S.fan = fan;
+  drawLcd();
+  const f = $("fanSvg");
+  f.classList.toggle("spin", fan > 0);
+  f.style.setProperty("--spin", fan > 0 ? (1.4 - fan / 255 * 1.15).toFixed(2) + "s" : "1s");
+  $("fanText").textContent = fan > 0
+    ? `Cooling fan ${Math.round(fan / 2.55)}% · ${ser[h].wue.toFixed(2)} L/kWh`
+    : (S.mode === "replay" && S.rt >= s + dur ? "Cooling fan off · job finished" : "Cooling fan off · eco waiting");
+  sendL(S.lcd[0], S.lcd[1], fan, Math.round(ser[h].ci), Math.round(S.w * 100));
+}
+
+const ICON = { "~": "💧", "^": "☁", "*": "✻", "!": "🌡", "#": "█", "_": "▯" };
+function drawLcd() {
+  const key = S.lcd.join("|");
+  if ($("lcd")._k === key) return;
+  $("lcd")._k = key;
+  let h = "";
+  for (const line of S.lcd) {
+    for (const ch of (line + "        ").slice(0, 8)) {
+      h += `<span>${ICON[ch] || (ch === " " ? "&nbsp;" : ch.replace("<", "&lt;"))}</span>`;
+    }
+  }
+  $("lcd").innerHTML = h;
+}
+function drawPages() {
+  $("pages").innerHTML = PAGE_NAMES.map((p, i) => `<span class="${i === S.page ? "on" : ""}">${p}</span>`).join("");
+}
+
+// =====================================================================
+// Scale Impact Simulator & Neal.fun Public Impact
+// =====================================================================
+function updateScaleSimulator(jobSavedLiters) {
+  const baseLiters = Math.max(0, jobSavedLiters);
+  const flexPct = S.flexPct || 15;
+  let totalSavedL, pools, co2Tons, carMiles, titleDesc;
+
+  if (S.scaleMode === "single") {
+    totalSavedL = baseLiters;
+    pools = totalSavedL / 2500000;
+    co2Tons = (totalSavedL * 0.115) / 1000;
+    carMiles = co2Tons * 2480;
+    titleDesc = `Scaled to 1 batch compute job (${S.jobH} hours @ ${S.jobKw >= 1000 ? (S.jobKw/1000).toFixed(0) + " MW" : S.jobKw + " kW"})`;
+  } else if (S.scaleMode === "campus") {
+    // 100 MW Campus: 100 MW / 4,000 MW = 1/40th of VA Alley fleet
+    const ratio = (100 / 4000) * (flexPct / 15);
+    totalSavedL = 722716170 * ratio; // 18,067,904 Liters
+    pools = totalSavedL / 2500000;   // 7.2 Pools
+    co2Tons = 83878 * ratio;         // 2,097 Tons
+    carMiles = 208000000 * ratio;    // 5.2M Miles
+    titleDesc = `Scaled to a standard 100 MW Ashburn Campus with ${flexPct}% flexible AI workloads (~${(100 * flexPct / 100).toFixed(1)} MW flexible capacity)`;
+  } else {
+    // 4.0 GW VA Data Center Alley
+    const ratio = (flexPct / 15);
+    totalSavedL = 722716170 * ratio; // 722,716,170 Liters
+    pools = totalSavedL / 2500000;   // 289 Pools
+    co2Tons = 83878 * ratio;         // 83,878 Tons
+    carMiles = 208000000 * ratio;    // 208M Miles
+    titleDesc = `Scaled to Northern Virginia's 4.0 GW Data Center Alley with ${flexPct}% flexible AI capacity (~${Math.round(4000 * flexPct / 100)} MW flexible)`;
+  }
+
+  const sub = $("scaleSubtitle");
+  if (sub) sub.textContent = titleDesc;
+
+  setNum("simWaterLiters", totalSavedL, fmtL);
+  setNum("simPools", pools, v => v < 1 ? v.toFixed(3) + " Pools" : (v < 10 ? v.toFixed(1) + " Pools" : Math.round(v).toLocaleString() + " Pools"));
+  setNum("simCarbon", co2Tons, v => v < 1 ? (v * 1000).toFixed(0) + " kg" : Math.round(v).toLocaleString() + " Tons");
+  setNum("simCars", carMiles, v => v >= 1e6 ? (v / 1e6).toFixed(1) + "M Miles" : Math.round(carMiles).toLocaleString() + " Miles");
+
+  updatePublicImpact(totalSavedL, co2Tons, pools);
+}
+
+function updatePublicImpact(liters, co2Tons, pools) {
+  const showers = Math.round(liters / 75);
+  const peopleWater = Math.max(0.1, (liters / 138000));
+  const bottles = Math.round(liters / 0.5);
+  const trees = Math.round(co2Tons / 0.022);
+  const cars = Math.round(co2Tons / 4.6);
+  const poolCount = pools < 1 ? pools.toFixed(3) : (pools < 10 ? pools.toFixed(1) : Math.round(pools).toLocaleString());
+
+  const elPools = $("impPools"), elShowers = $("impShowers"), elRes = $("impResidents");
+  const elBot = $("impBottles"), elTrees = $("impTrees"), elCars = $("impCars");
+
+  if (elPools) elPools.textContent = poolCount + " Pools";
+  if (elShowers) elShowers.textContent = showers >= 1e6 ? (showers / 1e6).toFixed(1) + "M Showers" : showers.toLocaleString() + " Showers";
+  if (elRes) elRes.textContent = (liters >= 1e6 ? Math.round(liters / 138000).toLocaleString() : peopleWater.toFixed(1)) + " People";
+  if (elBot) elBot.textContent = bottles >= 1e9 ? (bottles / 1e9).toFixed(2) + "B Bottles" : (bottles >= 1e6 ? (bottles / 1e6).toFixed(0) + "M Bottles" : bottles.toLocaleString() + " Bottles");
+  if (elTrees) elTrees.textContent = trees >= 1e6 ? (trees / 1e6).toFixed(2) + "M Trees" : trees.toLocaleString() + " Trees";
+  if (elCars) elCars.textContent = cars.toLocaleString() + " Cars";
+}
+
+// =====================================================================
+// Historical Replay Race
+// =====================================================================
+function tickRace() {
+  const ser = getSeries(), s = S.choice, dur = S.jobH;
+  const acc = start => {
+    let on = 0, kg = 0;
+    for (let k = start; k < start + dur; k++) {
+      const idx = k % 24;
+      const f = clamp(S.rt - k, 0, 1);
+      on += f * ser[idx].wue * S.jobKw;
+      kg += f * ser[idx].ci * S.jobKw / 1000;
+    }
+    return [on, kg];
+  };
+  [S.race.nOn, S.race.nKg] = acc(0);
+  [S.race.wOn, S.race.wKg] = acc(s);
+  paintRace();
+}
+
+function paintRace() {
+  const r = S.race, s = S.choice, rep = S.mode === "replay", dur = S.jobH;
+  $("nOnsite").textContent = fmtL(r.nOn);
+  $("nKg").textContent = Math.round(r.nKg) + " kg";
+  $("wOnsite").textContent = fmtL(r.wOn);
+  $("wKg").textContent = Math.round(r.wKg) + " kg";
+
+  const ser = getSeries();
+  const U = ser ? ser.map(x => x.wue) : null;
+  const full = ser ? Math.max(1, win(U, 0, dur) * S.jobKw * dur, win(U, s, dur) * S.jobKw * dur) : 1;
+  $("nTank").style.width = (100 * r.nOn / full) + "%";
+  $("wTank").style.width = (100 * r.wOn / full) + "%";
+
+  const st = (id, a) => {
+    const el = $(id);
+    const running = rep && S.rt >= a && S.rt < a + dur;
+    const done = rep && S.rt >= a + dur;
+    el.textContent = running ? "running" : done ? "done" : "waiting";
+    el.className = "state" + (running ? " on" : done ? " done" : "");
+  };
+  st("stNormal", 0);
+  st("stWb", s);
+  
+  $("clock").textContent = ser ? ser[clamp(Math.floor(S.rt), 0, 23)].label : "9AM";
+  $("prog").style.width = (rep ? S.rt / 24 * 100 : 0) + "%";
+
+  const v = $("raceVerdict");
+  if (rep && S.rt >= 24) {
+    const dl = r.nOn - r.wOn, dk = r.nKg - r.wKg;
+    v.textContent = `Job completed: Wetbulb saved ${Math.round(dl).toLocaleString()} liters of cooling water` +
+      (dk >= 0 ? ` and ${Math.round(dk)} kg less CO₂.` : `, with ${Math.round(-dk)} kg marginal CO₂.`);
+  } else v.textContent = "";
+}
+
+function play() {
+  if (!S.replay.length) return;
+  clearInterval(S.timer);
+  S.mode = "replay";
+  $("modePill").textContent = "Replay · " + S.replay[S.dayIdx].label;
+  S.race = { nOn: 0, nKg: 0, wOn: 0, wKg: 0 };
+  S.rt = 0;
+  render(); paintRace();
+  const t0 = performance.now();
+  S.playing = true;
+  $("playIcon").setAttribute("d", "M6 5h4v14H6zM14 5h4v14h-4z");
+  S.timer = setInterval(() => {
+    S.rt = Math.min(24, (performance.now() - t0) / REPLAY_MS * 24);
+    tickRace();
+    render();
+    if (S.rt >= 24) {
+      clearInterval(S.timer);
+      S.playing = false;
+      $("playIcon").setAttribute("d", "M7 4.5v15l13-7.5z");
+    }
+  }, 50);
+}
+
+function backToLive() {
+  clearInterval(S.timer);
+  S.playing = false;
+  S.mode = "live";
+  S.rt = 0;
+  S.race = { nOn: 0, nKg: 0, wOn: 0, wKg: 0 };
+  $("modePill").textContent = "Live · Ashburn, VA";
+  $("playIcon").setAttribute("d", "M7 4.5v15l13-7.5z");
+  render(); paintRace();
+  toast("Switched to live Ashburn forecast");
+}
+function togglePlay() { S.playing ? backToLive() : play(); }
+
+function pickDay(i) {
+  S.dayIdx = (i + S.replay.length) % S.replay.length;
+  document.querySelectorAll(".day").forEach((b, k) => b.classList.toggle("on", k === S.dayIdx));
+  if (S.mode === "replay") play();
+  else render();
+}
+
+// =====================================================================
+// Web Serial Hardware Protocol
+// =====================================================================
+async function connect() {
+  if (!("serial" in navigator)) { toast("Web Serial requires Chrome or Edge browser"); return; }
+  try {
+    const port = await navigator.serial.requestPort();
+    await port.open({ baudRate: 115200 });
+    const enc = new TextEncoderStream(); enc.readable.pipeTo(port.writable); S.writer = enc.writable.getWriter();
+    const dec = new TextDecoderStream(); port.readable.pipeTo(dec.writable);
+    const reader = dec.readable.getReader();
+    setLink(true); S.lastSent = ""; render(); toast("Hardware rack connected successfully");
+    let buf = "";
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += value;
+      let i;
+      while ((i = buf.indexOf("\n")) >= 0) {
+        const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
+        if (line) onLine(line);
+      }
+    }
+  } catch (e) { if (e.name !== "NotFoundError") toast("Serial error: " + e.message); }
+  setLink(false); S.writer = null;
+}
+function setLink(on) {
+  $("linkDot").classList.toggle("on", on);
+  $("linkText").textContent = on ? "Rack live" : "Rack offline";
+  $("connectBtn").textContent = on ? "Connected ✓" : "Connect rack";
+}
+function onLine(line) {
+  const p = line.split(",");
+  if (p[0] === "S" && p.length >= 3) {
+    const t = parseFloat(p[1]), h = parseFloat(p[2]);
+    if (!isNaN(t) && !isNaN(h)) setSensor(t, h, "rack sensor · live");
+  } else if (p[0] === "J") {
+    if (p[1] === "PAGE") { S.page = +p[2]; drawPages(); flashCard(PAGE_CARDS[S.page]); }
+    else if (p[1] === "W") { setWeight(+p[2] / 100); flashCard("cardTimeline"); }
+    else if (p[1] === "BTN") togglePlay();
+  } else if (p[0] === "E") $("airSource").textContent = "sensor error · check D7";
+}
+async function sendL(l1, l2, fan, co2, w) {
+  const msg = `L,${l1},${l2},${fan},${co2},${w}`, now = performance.now();
+  if (!S.writer || (msg === S.lastSent && now - S.lastSentAt < 3000)) return;
+  S.lastSent = msg; S.lastSentAt = now;
+  try { await S.writer.write(msg + "\n"); } catch (e) { /* port closed */ }
+}
+function setSensor(temp, rh, source) {
+  S.sensor = { temp, rh, twb: stull(temp, rh) };
+  $("airSource").textContent = source;
+  if (S.mode === "live") render();
+}
+
+// =====================================================================
+// Ultra-Smooth Atmosphere: Pre-rendered Sprite Vapor & Hardware Mouse
+// =====================================================================
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const cv = $("vapor"), ctx = cv.getContext("2d");
+let VW = 0, VH = 0;
+const parts = [];
+const mouse = { x: -999, y: -999, lx: innerWidth / 2, ly: innerHeight / 3, tx: innerWidth / 2, ty: innerHeight / 3 };
+
+// Pre-render particle sprites to offscreen canvases for 100x rendering boost
+const spriteCanvases = [];
+function initSprites() {
+  const hues = [195, 155, 38]; // Aquatic cyan, eco emerald, warm amber
+  hues.forEach(hue => {
+    [16, 32].forEach(sz => {
+      const c = document.createElement("canvas");
+      c.width = sz; c.height = sz;
+      const sctx = c.getContext("2d");
+      const r = sz / 2;
+      const g = sctx.createRadialGradient(r, r, 0, r, r, r);
+      g.addColorStop(0, `hsla(${hue}, 95%, 72%, 0.8)`);
+      g.addColorStop(0.35, `hsla(${hue}, 90%, 65%, 0.25)`);
+      g.addColorStop(1, `hsla(${hue}, 85%, 60%, 0)`);
+      sctx.fillStyle = g;
+      sctx.beginPath();
+      sctx.arc(r, r, r, 0, Math.PI * 2);
+      sctx.fill();
+      spriteCanvases.push({ hue, sz, canvas: c });
+    });
+  });
+}
+initSprites();
+
+function resize() {
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  VW = innerWidth; VH = innerHeight;
+  cv.width = VW * dpr; cv.height = VH * dpr;
+  cv.style.width = VW + "px"; cv.style.height = VH + "px";
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  updateCardRects();
+}
+addEventListener("resize", resize);
+
+function spawn(seed) {
+  const big = Math.random() < 0.12;
+  parts.push({
+    x: Math.random() * VW,
+    y: seed ? Math.random() * VH : VH + 15,
+    vx: (Math.random() - 0.5) * 0.25,
+    vy: -(0.3 + Math.random() * 0.75),
+    sz: big ? 32 : 16,
+    life: seed ? Math.random() * 320 : 0,
+    max: 360 + Math.random() * 380,
+    hueType: S.heat > 0.6 ? 2 : (Math.random() < 0.5 ? 0 : 1),
+    ph: Math.random() * 6.28
+  });
+}
+for (let i = 0; i < 70; i++) spawn(true);
+
+// Cache card bounding rects to prevent layout thrashing on mousemove
+let cardRects = [];
+function updateCardRects() {
+  cardRects = Array.from(document.querySelectorAll(".card")).map(c => ({ el: c, rect: c.getBoundingClientRect() }));
+}
+addEventListener("scroll", updateCardRects, { passive: true });
+
+function frame(now) {
+  stepTweens(now);
+  
+  // Smooth spring follower for cursor spotlight
+  mouse.lx = lerp(mouse.lx, mouse.tx, 0.14);
+  mouse.ly = lerp(mouse.ly, mouse.ty, 0.14);
+  $("cursorLight").style.transform = `translate3d(${mouse.lx}px, ${mouse.ly}px, 0)`;
+  $("cursorDot").style.transform = `translate3d(${mouse.tx}px, ${mouse.ty}px, 0)`;
+
+  if (!reduceMotion) {
+    const rate = 0.2 + S.intensity * 2.5 + (S.fan > 0 ? 0.6 : 0);
+    for (let k = 0; k < rate; k++) if (Math.random() < rate - k && parts.length < 180) spawn(false);
+    
+    ctx.clearRect(0, 0, VW, VH);
+    
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const p = parts[i];
+      p.life++; p.ph += 0.02;
+      p.vx += Math.sin(p.ph) * 0.005;
+      
+      const dx = p.x - mouse.x, dy = p.y - mouse.y, d2 = dx * dx + dy * dy;
+      if (d2 < 18000) {
+        const f = (1 - d2 / 18000) * 0.5, d = Math.sqrt(d2) || 1;
+        p.vx += dx / d * f; p.vy += dy / d * f * 0.4;
+      }
+      p.vx *= 0.98; p.vy = p.vy * 0.985 - 0.004;
+      p.x += p.vx; p.y += p.vy;
+
+      if (p.life > p.max || p.y < -30) { parts.splice(i, 1); continue; }
+      
+      const a = Math.sin(Math.PI * p.life / p.max) * 0.45;
+      ctx.globalAlpha = a;
+      
+      // Fast offscreen sprite draw
+      const sp = spriteCanvases.find(s => s.sz === p.sz) || spriteCanvases[0];
+      ctx.drawImage(sp.canvas, p.x - p.sz / 2, p.y - p.sz / 2);
+    }
+    ctx.globalAlpha = 1.0;
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+// Passive non-blocking mousemove listener
+addEventListener("pointermove", e => {
+  mouse.x = e.clientX; mouse.y = e.clientY;
+  mouse.tx = e.clientX; mouse.ty = e.clientY;
+  
+  // Non-thrashing edge spotlight for hovered cards
+  for (let i = 0; i < cardRects.length; i++) {
+    const cr = cardRects[i], r = cr.rect;
+    if (e.clientX >= r.left - 60 && e.clientX <= r.right + 60 &&
+        e.clientY >= r.top - 60 && e.clientY <= r.bottom + 60) {
+      cr.el.style.setProperty("--mx", (e.clientX - r.left) + "px");
+      cr.el.style.setProperty("--my", (e.clientY - r.top) + "px");
+    }
+  }
+}, { passive: true });
+
+document.addEventListener("pointerleave", () => { mouse.x = mouse.y = -999; });
+
+// Magnetic buttons
+for (const b of document.querySelectorAll(".magnetic")) {
+  b.addEventListener("pointermove", e => {
+    const r = b.getBoundingClientRect();
+    b.style.transform = `translate(${(e.clientX - r.left - r.width / 2) * 0.2}px, ${(e.clientY - r.top - r.height / 2) * 0.25}px)`;
+  });
+  b.addEventListener("pointerleave", () => { b.style.transform = ""; });
+}
+
+// =====================================================================
+// Evidence Charts & Backtest Insights
+// =====================================================================
+function fillEvidence() {
+  if (!S.results) return;
+  const r = S.results, bt = Object.fromEntries(r.backtest.map(b => [b.policy, b]));
+  $("evidenceTitle").textContent = `What ${r.data.days_backtested.toLocaleString()} real days of Virginia data show`;
+  
+  const pct1 = v => "−" + Math.abs(v).toFixed(1) + "%";
+  const stats = {
+    sOnsite: [bt["Wetbulb"].onsite_saved_pct, pct1],
+    sCarbonOnly: [bt["Carbon only"].onsite_saved_pct, pct1],
+    sGallons: [r.scale_up.onsite_water_gallons_per_year / 1e6, v => Math.round(v) + "M"],
+    sConflict: [r.story.conflict_share_pct, v => Math.round(v) + "%"]
+  };
+
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return;
+    e.target.classList.add("in");
+    const b = e.target.querySelector("b[id]");
+    if (b && stats[b.id]) setNum(b, stats[b.id][0], stats[b.id][1], 1500);
+    io.unobserve(e.target);
+  }), { threshold: 0.15 });
+  document.querySelectorAll(".reveal").forEach(el => io.observe(el));
+
+  const sans = 'font-family="IBM Plex Sans, sans-serif"', mono = 'font-family="JetBrains Mono, monospace"';
+  
+  // Mini chart 1: Water per job by policy (Horizontal Bars Emerging from Right-Hand Side)
+  const pol = ["Run now", "Carbon only", "Water only", "Wetbulb"];
+  const col = ["#94a3b8", "#a78bfa", "#38bdf8", "#34d399"];
+  const mx = Math.max(...pol.map(p => bt[p].onsite_liters));
+  let h = `<defs>
+    <linearGradient id="bgR0" x1="1" y1="0" x2="0" y2="0"><stop offset="0%" stop-color="#94a3b8"/><stop offset="100%" stop-color="#64748b"/></linearGradient>
+    <linearGradient id="bgR1" x1="1" y1="0" x2="0" y2="0"><stop offset="0%" stop-color="#c4b5fd"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient>
+    <linearGradient id="bgR2" x1="1" y1="0" x2="0" y2="0"><stop offset="0%" stop-color="#7dd3fc"/><stop offset="100%" stop-color="#0284c7"/></linearGradient>
+    <linearGradient id="bgR3" x1="1" y1="0" x2="0" y2="0"><stop offset="0%" stop-color="#6ee7b7"/><stop offset="100%" stop-color="#059669"/></linearGradient>
+  </defs>
+  <line x1="382" y1="14" x2="382" y2="198" stroke="rgba(56, 189, 248, 0.45)" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="382" cy="14" r="3" fill="#38bdf8"/>
+  <circle cx="382" cy="198" r="3" fill="#38bdf8"/>
+  <text x="382" y="8" text-anchor="end" fill="#94a3b8" font-size="9.5" ${mono}>RIGHT BASELINE (0 L)</text>`;
+
+  pol.forEach((p, i) => {
+    const y = 18 + i * 46;
+    const maxBarW = 205;
+    const w = maxBarW * bt[p].onsite_liters / mx;
+    const barX = 382 - w;
+    const isWb = p === "Wetbulb";
+
+    h += `<g class="hbar-group" style="cursor:pointer;" data-p="${p}">
+      <text x="10" y="${y + 14}" fill="#f1f5f9" font-size="12.5" font-weight="${isWb ? '700' : '500'}" ${sans}>${p}</text>
+      ${isWb ? `<rect x="74" y="${y + 2}" width="54" height="15" rx="4" fill="rgba(52,211,153,0.18)" stroke="rgba(52,211,153,0.4)"/><text x="101" y="${y + 13}" text-anchor="middle" fill="#34d399" font-size="9" font-weight="700" ${mono}>−24.3%</text>` : ''}
+      <rect x="${barX}" y="${y}" width="${w}" height="19" rx="9.5" fill="url(#bgR${i})" opacity="${isWb ? 1 : 0.85}"/>
+      <text x="${barX - 8}" y="${y + 14}" fill="${col[i]}" font-size="12" font-weight="700" text-anchor="end" ${mono}>${Math.round(bt[p].onsite_liters).toLocaleString()} L</text>
+    </g>`;
+  });
+  $("barsChart").innerHTML = h + `<text x="382" y="220" text-anchor="end" fill="#8493b8" font-size="10.5" ${sans}>← Horizontal bars emerge from right-side baseline · cooling tower L/4h</text>`;
+
+  // Mini chart 2: Summer rhythm
+  const hrs = [...Array(24).keys()];
+  const sm = k => hrs.map(hh => avg([6, 7, 8].map(m => S.profile.month_hour[`${m}-${hh}`][k])));
+  const cI = sm("ci"), uI = sm("wue");
+  const cLo = Math.min(...cI) * 0.97, cHi = Math.max(...cI) * 1.03, uHi = Math.max(...uI) * 1.15;
+  const X = i => 12 + i * 376 / 23, Yc = v => 185 - (v - cLo) / (cHi - cLo) * 155, Yu = v => 185 - v / uHi * 155;
+  const line = (a, y) => a.map((v, i) => `${i ? "L" : "M"}${X(i)},${y(v)}`).join("");
+  const cMin = cI.indexOf(Math.min(...cI)), uMin = uI.indexOf(Math.min(...uI));
+
+  $("rhythmChart").innerHTML = `<defs>
+      <linearGradient id="ra" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#38bdf8" stop-opacity=".35"/>
+        <stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <path d="${line(uI, Yu)} L${X(23)},185 L${X(0)},185 Z" fill="url(#ra)"/>
+    <path d="${line(uI, Yu)}" stroke="#38bdf8" stroke-width="2.8" fill="none"/>
+    <path d="${line(cI, Yc)}" stroke="#a78bfa" stroke-width="2.8" fill="none"/>
+    <circle cx="${X(uMin)}" cy="${Yu(uI[uMin])}" r="5" fill="#38bdf8"/>
+    <text x="${clamp(X(uMin), 60, 340)}" y="${Yu(uI[uMin]) - 12}" fill="#7dd3fc" font-size="11" text-anchor="middle" ${mono}>least water ${hourLabel(uMin)}</text>
+    <circle cx="${X(cMin)}" cy="${Yc(cI[cMin])}" r="5" fill="#a78bfa"/>
+    <text x="${clamp(X(cMin), 60, 340)}" y="${Yc(cI[cMin]) + 20}" fill="#c4b5fd" font-size="11" text-anchor="middle" ${mono}>cleanest ${hourLabel(cMin)}</text>
+    ${[0, 6, 12, 18, 23].map(i => `<text x="${X(i)}" y="206" fill="#8493b8" font-size="10.5" text-anchor="middle" ${mono}>${hourLabel(i)}</text>`).join("")}
+    <text x="0" y="224" fill="#8493b8" font-size="11" ${sans}>Summer hourly average · purple = CO₂, blue = cooling water</text>`;
+
+  // Mini chart 3: Trade-off frontier
+  const tr = r.tradeoff, xs = tr.map(t => t.co2_saved_pct), ys = tr.map(t => t.water_saved_pct);
+  const x0 = Math.min(...xs, 0), x1 = Math.max(...xs), y1 = Math.max(...ys);
+  const TX = v => 34 + (v - x0) / (x1 - x0 || 1) * 330, TY = v => 180 - v / (y1 || 1) * 155;
+  const mid = tr.find(t => Math.abs(t.w_carbon - 0.5) < 1e-6) || tr[5];
+
+  $("tradeChart").innerHTML = `<defs>
+      <linearGradient id="tg" x1="0" x2="1">
+        <stop offset="0%" stop-color="#38bdf8"/>
+        <stop offset="50%" stop-color="#34d399"/>
+        <stop offset="100%" stop-color="#a78bfa"/>
+      </linearGradient>
+    </defs>
+    <line x1="34" y1="180" x2="370" y2="180" stroke="rgba(148,163,214,.18)"/>
+    <line x1="34" y1="15" x2="34" y2="180" stroke="rgba(148,163,214,.18)"/>
+    <path d="${tr.map((t, i) => `${i ? "L" : "M"}${TX(t.co2_saved_pct)},${TY(t.water_saved_pct)}`).join("")}" stroke="url(#tg)" stroke-width="3" fill="none"/>
+    ${tr.map(t => `<circle cx="${TX(t.co2_saved_pct)}" cy="${TY(t.water_saved_pct)}" r="${t === mid ? 7 : 4}" fill="${t === mid ? '#34d399' : '#cbd5e1'}"/>`).join("")}
+    <text x="${TX(mid.co2_saved_pct) - 10}" y="${TY(mid.water_saved_pct) - 12}" fill="#6ee7b7" font-size="11.5" text-anchor="end" ${mono}>Wetbulb Default (50/50)</text>
+    <text x="40" y="${TY(tr[0].water_saved_pct) - 8}" fill="#7dd3fc" font-size="10.5" ${mono}>all water</text>
+    <text x="366" y="${TY(tr[tr.length - 1].water_saved_pct) - 8}" fill="#c4b5fd" font-size="10.5" text-anchor="end" ${mono}>all carbon</text>
+    <text x="200" y="204" fill="#8493b8" font-size="11" text-anchor="middle" ${sans}>% CO₂ emissions reduced →</text>
+    <text x="0" y="224" fill="#8493b8" font-size="11" ${sans}>Interactive Pareto frontier: sliding weight balances climate priorities</text>`;
+
+  $("sources").textContent = `Grid: ${r.data.grid}, ${r.data.start} to ${r.data.end}. Weather: ${r.data.weather}. ` +
+    `Power-plant water: NREL (Macknick et al. 2012). Cooling water: simplified thermodynamic wet-bulb model calibrated to ~1.8 L/kWh U.S. average (LBNL 2016). ` +
+    `Scale-up assumes ${r.scale_up.assumptions}.`;
+
+  $("days").innerHTML = S.replay.map((d, i) =>
+    `<button class="day${i === S.dayIdx ? " on" : ""}" data-i="${i}">${d.title}<small>${d.label}</small></button>`
+  ).join("");
+  document.querySelectorAll(".day").forEach(b => b.onclick = () => pickDay(+b.dataset.i));
+}
+
+// =====================================================================
+// UI Wiring & Interactive Actions
+// =====================================================================
+function flashCard(id) {
+  const el = $(id);
+  if (!el) return;
+  el.classList.add("flash");
+  setTimeout(() => el.classList.remove("flash"), 900);
+}
+
+let toastT;
+function toast(m, icon = "✨") {
+  const t = $("toast");
+  $("toastText").textContent = m;
+  $("toastIcon").textContent = icon;
+  t.classList.add("show");
+  clearTimeout(toastT);
+  toastT = setTimeout(() => t.classList.remove("show"), 2800);
+}
+
+function toggleDemo() {
+  S.demo = !S.demo;
+  $("demoBox").classList.toggle("show", S.demo);
+  $("demoBtn").textContent = S.demo ? "Hide demo" : "Demo sensor";
+  if (S.demo) demoInput();
+}
+
+function demoInput() {
+  const t = +$("dT").value, h = +$("dH").value;
+  $("dTv").textContent = t + " °C"; $("dHv").textContent = h + "%";
+  setSensor(t, h, "demo sensor");
+}
+
+function updateSliderBubble(pct) {
+  const b = $("weightBubble");
+  if (!b) return;
+  b.style.left = clamp(pct, 4, 96) + "%";
+  const carb = 100 - pct, wat = pct;
+  b.textContent = wat === 50 ? "50% Water / 50% Carbon" : (wat > 50 ? `💧 ${wat}% Water / 🍃 ${carb}% Carbon` : `🍃 ${carb}% Carbon / 💧 ${wat}% Water`);
+}
+
+function setWeight(w) {
+  S.w = clamp(Math.round(w * 100) / 100, 0, 1);
+  render();
+  if (S.mode === "replay" && !S.playing) tickRace();
+}
+
+// Workload Presets
+function setWorkload(key) {
+  if (!WORKLOAD_PRESETS[key]) return;
+  S.workload = key;
+  S.jobH = WORKLOAD_PRESETS[key].hours;
+  S.jobKw = WORKLOAD_PRESETS[key].kw;
+  document.querySelectorAll("[data-job]").forEach(b => b.classList.toggle("active", b.dataset.job === key));
+  render();
+  toast(`Switched to ${WORKLOAD_PRESETS[key].name} (${S.jobH}h @ ${(S.jobKw >= 1000 ? (S.jobKw/1000).toFixed(0) + ' MW' : S.jobKw + ' kW')})`);
+}
+
+// Weather Presets
+function setWeatherPreset(p) {
+  S.weatherPreset = p;
+  $("btnLiveWeather").classList.toggle("active", p === "live");
+  $("btnHeatwave").classList.toggle("active", p === "heatwave");
+  $("btnHumid").classList.toggle("active", p === "humid");
+  $("btnWinter").classList.toggle("active", p === "winter");
+  render();
+  toast(`Active Weather Scenario: ${p === 'live' ? 'Live Ashburn Forecast' : (p === 'heatwave' ? 'July Heatwave' : (p === 'humid' ? 'Humid Storm' : 'Winter Free-Cooling'))}`);
+}
+
+// Export Modal
+function openExportModal() {
+  const ser = getSeries();
+  const s = S.choice;
+  const startHour = ser[s].label;
+  const endHour = ser[(s + S.jobH) % 24].label;
+  const savedL = Math.max(0, Math.round((win(ser.map(x=>x.wue), 0, S.jobH) - win(ser.map(x=>x.wue), s, S.jobH)) * S.jobKw * S.jobH));
+
+  const yaml = `# Wetbulb AI Automated Eco-Dispatch Plan
+# Optimal Window: ${startHour} - ${endHour} (Ashburn Time)
+# Estimated Freshwater Conservation: ${savedL.toLocaleString()} Liters
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ${S.workload}-eco-dispatch
+  namespace: ai-compute
+spec:
+  schedule: "0 ${ser[s].hour} * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          annotations:
+            wetbulb.org/water-saved-liters: "${savedL}"
+            wetbulb.org/priority-weight: "${S.w}"
+            wetbulb.org/optimal-window: "${startHour}-${endHour}"
+        spec:
+          containers:
+          - name: ai-workload
+            image: nvcr.io/nvidia/pytorch:24.08-py3
+            resources:
+              limits:
+                nvidia.com/gpu: 64
+            command: ["python3", "run_${S.workload}.py"]
+          restartPolicy: OnFailure`;
+
+  $("exportCode").textContent = yaml;
+  $("exportModal").classList.add("show");
+}
+
+// Event Listeners
+$("connectBtn").onclick = connect;
+$("playBtn").onclick = togglePlay;
+$("liveBtn").onclick = backToLive;
+$("demoBtn").onclick = toggleDemo;
+$("exportBtn").onclick = openExportModal;
+$("closeExportModal").onclick = () => $("exportModal").classList.remove("show");
+$("doneExportBtn").onclick = () => $("exportModal").classList.remove("show");
+$("copyExportBtn").onclick = () => {
+  navigator.clipboard.writeText($("exportCode").textContent);
+  toast("Kubernetes Eco-CronJob copied to clipboard!");
+};
+
+$("helpBtn").onclick = () => $("helpModal").classList.toggle("show");
+$("closeHelpModal").onclick = () => $("helpModal").classList.remove("show");
+$("helpModal").onclick = e => { if (e.target === $("helpModal")) $("helpModal").classList.remove("show"); };
+$("exportModal").onclick = e => { if (e.target === $("exportModal")) $("exportModal").classList.remove("show"); };
+
+$("dT").oninput = demoInput;
+$("dH").oninput = demoInput;
+$("weight").oninput = e => {
+  const val = +e.target.value;
+  setWeight((100 - val) / 100);
+  updateSliderBubble(val);
+};
+$("fsBtn").onclick = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+
+// Workload preset buttons
+$("wInference").onclick = () => setWorkload("inference");
+$("wTraining").onclick = () => setWorkload("training");
+$("wDiffusion").onclick = () => setWorkload("diffusion");
+$("wFinetune").onclick = () => setWorkload("finetune");
+
+// Weather scenario buttons
+$("btnLiveWeather").onclick = () => setWeatherPreset("live");
+$("btnHeatwave").onclick = () => setWeatherPreset("heatwave");
+$("btnHumid").onclick = () => setWeatherPreset("humid");
+$("btnWinter").onclick = () => setWeatherPreset("winter");
+
+// Scale mode toggle
+$("btnScaleSingle").onclick = () => { S.scaleMode = "single"; toggleScaleBtn("btnScaleSingle"); render(); };
+$("btnScaleCampus").onclick = () => { S.scaleMode = "campus"; toggleScaleBtn("btnScaleCampus"); render(); };
+$("btnScaleVA").onclick = () => { S.scaleMode = "va"; toggleScaleBtn("btnScaleVA"); render(); };
+
+function toggleScaleBtn(id) {
+  ["btnScaleSingle", "btnScaleCampus", "btnScaleVA"].forEach(b => $(b).classList.toggle("active", b === id));
+}
+
+// Neal.fun Real-Time Evaporation Clock
+let tickerStart = performance.now();
+setInterval(() => {
+  const elapsedSec = (performance.now() - tickerStart) / 1000;
+  const evap = Math.round(elapsedSec * 22.9);
+  const saved = Math.round(elapsedSec * 5.62);
+  const elE = $("liveSecLiters"), elS = $("liveSecSaved"), elT = $("liveTickerSec");
+  if (elE) elE.textContent = evap.toLocaleString() + " L";
+  if (elS) elS.textContent = saved.toLocaleString() + " L";
+  if (elT) elT.textContent = Math.floor(elapsedSec) + "s";
+}, 200);
+
+// Neal.fun Flexible Workload Slider
+const flexS = $("flexSlider");
+if (flexS) {
+  flexS.oninput = e => {
+    const v = +e.target.value;
+    S.flexPct = v;
+    $("flexPctVal").textContent = v + "%";
+    render();
+  };
+}
+
+// Neal.fun Reservoir Fill Game
+let pouredLiters = 0;
+const btnPour = $("btnPourWater");
+if (btnPour) {
+  btnPour.onclick = () => {
+    pouredLiters += 10000;
+    const curH = Math.min(95, 68 + (pouredLiters / 10000) * 4);
+    $("reservoirWater").style.height = curH + "%";
+    $("reservoirVolume").textContent = `+${pouredLiters.toLocaleString()} L Poured`;
+    $("reservoirStatus").textContent = `Reservoir Level: ${Math.round(curH)}% (${curH > 85 ? 'Plentiful Buffer 🌊' : 'Safe Buffer'})`;
+    toast(`💧 Added 10,000 Liters to Goose Creek Reservoir! (+${pouredLiters.toLocaleString()} L total)`);
+  };
+}
+const btnResetRes = $("btnResetReservoir");
+if (btnResetRes) {
+  btnResetRes.onclick = () => {
+    pouredLiters = 0;
+    $("reservoirWater").style.height = "68%";
+    $("reservoirVolume").textContent = "+0 Liters Poured";
+    $("reservoirStatus").textContent = "Reservoir Level: 68% (Safe Buffer)";
+    toast("Reservoir buffer reset to baseline.");
+  };
+}
+
+// Hotspot pills
+document.querySelectorAll(".hotspot-pill").forEach(p => {
+  p.onclick = () => {
+    document.querySelectorAll(".hotspot-pill").forEach(x => x.classList.remove("active"));
+    p.classList.add("active");
+    const spot = p.dataset.spot;
+    const msgs = {
+      ashburn: "Ashburn Data Center Alley: 4.0 GW capacity consuming up to 15% of summer municipal water during peak heat.",
+      potomac: "Potomac River Intake: Primary drinking water source for 5 million DC metro & Northern Virginia residents.",
+      goose: "Goose Creek Reservoir: Loudoun Water's critical summer drought storage facility holding ~1 billion gallons.",
+      peaker: "Possum Point Peaker: High-carbon natural gas turbine fired during peak PJM heatwave hours."
+    };
+    toast(msgs[spot] || p.textContent);
+  };
+});
+
+// 3D Card Tilt Mouse Interaction
+document.querySelectorAll(".card").forEach(card => {
+  card.addEventListener("pointermove", e => {
+    const r = card.getBoundingClientRect();
+    const x = e.clientX - r.left, y = e.clientY - r.top;
+    const cx = r.width / 2, cy = r.height / 2;
+    const tiltX = (y - cy) / cy * -4;
+    const tiltY = (x - cx) / cx * 4;
+    card.style.transform = `perspective(1000px) rotateX(${tiltX.toFixed(2)}deg) rotateY(${tiltY.toFixed(2)}deg) translateZ(2px)`;
+  });
+  card.addEventListener("pointerleave", () => {
+    card.style.transform = "";
+  });
+});
+
+// Chart toggles
+$("toggleWater").onclick = () => {
+  S.showWater = !S.showWater;
+  $("toggleWater").classList.toggle("on", S.showWater);
+  render();
+};
+$("toggleCarbon").onclick = () => {
+  S.showCarbon = !S.showCarbon;
+  $("toggleCarbon").classList.toggle("on", S.showCarbon);
+  render();
+};
+$("toggleEco").onclick = () => {
+  S.showEco = !S.showEco;
+  $("toggleEco").classList.toggle("on", S.showEco);
+  render();
+};
+
+// Keyboard navigation
+addEventListener("keydown", e => {
+  if (e.target.tagName === "INPUT" || e.metaKey || e.ctrlKey) return;
+  const k = e.key.toLowerCase();
+  if (k === " ") { e.preventDefault(); togglePlay(); }
+  else if (k === "arrowleft") pickDay(S.dayIdx - 1);
+  else if (k === "arrowright") pickDay(S.dayIdx + 1);
+  else if (k === "arrowup") { e.preventDefault(); setWeight(S.w + 0.1); }
+  else if (k === "arrowdown") { e.preventDefault(); setWeight(S.w - 0.1); }
+  else if (k === "c") connect();
+  else if (k === "d") toggleDemo();
+  else if (k === "e") openExportModal();
+  else if (k === "f") $("fsBtn").click();
+  else if (k === "?" || k === "/") $("helpModal").classList.toggle("show");
+  else if (k === "escape") {
+    $("helpModal").classList.remove("show");
+    $("exportModal").classList.remove("show");
+  }
+});
+
+setInterval(() => { if (S.writer) { S.lastSent = ""; render(); } }, 5000);
+setInterval(async () => { await loadForecast(); if (S.mode === "live") render(); }, 15 * 60 * 1000);
+setInterval(() => {
+  $("decisionTime").textContent = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}, 1000);
+
+// Init
+(async function init() {
+  drawLcd(); drawPages();
+  resize();
+  try {
+    await loadData();
+  } catch (e) {
+    $("decision").textContent = "Data loading issue";
+    $("decisionSub").textContent = "Ensure data.js or outputs/*.json are present in the directory.";
+    return;
+  }
+  fillEvidence();
+  await loadForecast();
+  render(); paintRace();
+  if (location.hash.startsWith("#replay")) {
+    pickDay(+(location.hash.slice(7) || 0));
+    play();
+  }
+})();
+</script>
+</body>
+</html>
