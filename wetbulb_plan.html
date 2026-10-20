@@ -1,0 +1,538 @@
+<title>Wetbulb Game Plan</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: a single reading column (about 760px) with wide "sheets" for wireframes; blueprint-style dashed frames mark anything that is a sketch, not a finished design. */
+:root {
+  --paper: #f6f8f8;
+  --sheet: #ffffff;
+  --ink: #15201f;
+  --muted: #5b6b6a;
+  --rule: #d5dedd;
+  --water: #1f6fb2;
+  --water-soft: #dcebf7;
+  --carbon: #4a4f57;
+  --carbon-soft: #e6e7ea;
+  --pick: #c98a12;
+  --pick-soft: #fbefd6;
+  --wire: #8fa3a1;
+  --lcd-bg: #9fc25a;
+  --lcd-ink: #1d2a10;
+  --ok: #2d8a5b;
+  --font-display: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper: #0f1615; --sheet: #16201f; --ink: #e4ecea; --muted: #97a8a6; --rule: #2a3735;
+    --water: #6cb2ec; --water-soft: #16324a; --carbon: #b9bec6; --carbon-soft: #2a2e34;
+    --pick: #f0b445; --pick-soft: #3a2c10; --wire: #5f7472; --lcd-bg: #7a9a3e; --lcd-ink: #10180a; --ok: #5cc48d;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #0f1615; --sheet: #16201f; --ink: #e4ecea; --muted: #97a8a6; --rule: #2a3735;
+  --water: #6cb2ec; --water-soft: #16324a; --carbon: #b9bec6; --carbon-soft: #2a2e34;
+  --pick: #f0b445; --pick-soft: #3a2c10; --wire: #5f7472; --lcd-bg: #7a9a3e; --lcd-ink: #10180a; --ok: #5cc48d;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--paper); color: var(--ink);
+  font: 16px/1.6 var(--font-body);
+  padding-block: 40px 80px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.col { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+.wide { max-width: 1080px; margin: 0 auto; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(2.2rem, 6vw, 3.4rem); letter-spacing: -0.02em; }
+h2 { font-size: 1.75rem; margin-top: 42px; padding-top: 22px; border-top: 1px solid var(--rule); }
+h3 { font-size: 1.15rem; margin-top: 10px; }
+p { margin: 0; max-width: 66ch; }
+ul, ol { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column; gap: 6px; }
+.eyebrow { font: 600 0.75rem/1 var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.lede { font-size: 1.15rem; color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 0.88em; }
+code { background: var(--carbon-soft); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+a { color: var(--water); }
+.w { color: var(--water); font-weight: 600; }
+.c { color: var(--carbon); font-weight: 600; }
+.p { color: var(--pick); font-weight: 600; }
+
+.callout { background: var(--pick-soft); border-left: 3px solid var(--pick); padding: 14px 16px; border-radius: 0 6px 6px 0; }
+.callout strong { font-family: var(--font-display); }
+
+/* plain-English explainer */
+.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.step { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+.step .eyebrow { color: var(--water); }
+.step h3 { margin: 0; }
+.pitch { font-family: var(--font-display); font-size: 1.35rem; line-height: 1.35; border: 1px solid var(--rule); background: var(--sheet); padding: 20px; border-radius: 8px; }
+
+/* tables */
+.tbl { overflow-x: auto; border: 1px solid var(--rule); border-radius: 8px; background: var(--sheet); }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font: 600 0.72rem/1.3 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+tr:last-child td { border-bottom: 0; }
+td.num { font-variant-numeric: tabular-nums; font-family: var(--font-mono); white-space: nowrap; }
+
+/* run sheet */
+.run { display: flex; flex-direction: column; border: 1px solid var(--rule); border-radius: 8px; background: var(--sheet); overflow: hidden; }
+.run-row { display: grid; grid-template-columns: 92px 1fr; gap: 14px; padding: 12px 16px; border-bottom: 1px solid var(--rule); }
+.run-row:last-child { border-bottom: 0; }
+.run-row time { font: 600 0.9rem var(--font-mono); font-variant-numeric: tabular-nums; }
+.run-row.ask { background: var(--water-soft); }
+.run-row.hard { background: var(--pick-soft); }
+.tag { display: inline-block; font: 600 0.7rem/1 var(--font-mono); letter-spacing: 0.06em; padding: 4px 7px; border-radius: 99px; border: 1px solid currentColor; margin-right: 6px; vertical-align: 2px; }
+
+/* wireframes */
+.sheet-label { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.wf { border: 1.5px dashed var(--wire); border-radius: 10px; background: var(--sheet); padding: 14px; font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); }
+.wf .box { border: 1.5px solid var(--wire); border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.wf .lbl { font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; font-size: 0.68rem; color: var(--muted); }
+.wf .big { font-family: var(--font-display); font-size: 1.5rem; color: var(--ink); line-height: 1.15; }
+.wf .note { font-style: italic; color: var(--wire); }
+.pill { display: inline-flex; align-items: center; gap: 6px; border-radius: 99px; padding: 3px 10px; font-weight: 600; border: 1.5px solid var(--wire); color: var(--ink); white-space: nowrap; }
+.pill.w { border-color: var(--water); color: var(--water); }
+.pill.c { border-color: var(--carbon); color: var(--carbon); }
+.pill.p { border-color: var(--pick); color: var(--pick); }
+.btn { border: 1.5px solid var(--ink); border-radius: 6px; padding: 5px 10px; color: var(--ink); font-weight: 600; white-space: nowrap; }
+
+.dash { display: grid; grid-template-columns: 1fr; gap: 10px; min-width: 760px; }
+.dash-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.dash-main { display: grid; grid-template-columns: 2.1fr 1fr; gap: 10px; }
+.dash-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.slider { height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--carbon), var(--water)); position: relative; margin: 10px 0 4px; }
+.slider::after { content: ""; position: absolute; left: 50%; top: -6px; width: 16px; height: 16px; border-radius: 50%; background: var(--sheet); border: 2px solid var(--ink); transform: translateX(-50%); }
+.scroll { overflow-x: auto; padding-bottom: 4px; }
+svg text { font-family: var(--font-mono); }
+
+/* LCD mockups */
+.lcds { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
+.lcd-card { display: flex; flex-direction: column; gap: 8px; }
+.lcd { background: var(--lcd-bg); border: 6px solid #2b3a2f; border-radius: 6px; padding: 8px; display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; width: 210px; max-width: 100%; }
+.lcd span { background: rgba(0,0,0,0.06); color: var(--lcd-ink); font: 600 1.05rem/1.5 var(--font-mono); text-align: center; border-radius: 2px; }
+.lcd-card p { font-size: 0.88rem; color: var(--muted); }
+.lcd.mini { width: 150px; border-width: 4px; padding: 5px; gap: 2px; }
+.lcd.mini span { font-size: 0.78rem; }
+.sw { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+
+/* slides storyboard */
+.story { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+.frame { display: flex; flex-direction: column; gap: 8px; }
+.frame .scr { aspect-ratio: 16 / 9; max-width: 100%; background: #0d1117; border-radius: 6px; border: 1.5px dashed var(--wire); position: relative; overflow: hidden; color: #e6edf3; font: 0.7rem/1.3 var(--font-mono); padding: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px; text-align: center; }
+.frame .scr b { font-family: var(--font-display); font-size: 1rem; }
+.frame .num { position: absolute; top: 6px; left: 8px; color: #8b949e; }
+.frame p { font-size: 0.86rem; color: var(--muted); }
+
+/* prompts */
+details { border: 1px solid var(--rule); border-radius: 8px; background: var(--sheet); }
+summary { cursor: pointer; padding: 12px 16px; font-family: var(--font-display); font-weight: 600; font-size: 1.05rem; }
+summary:focus-visible { outline: 2px solid var(--water); outline-offset: 2px; }
+details pre { margin: 0; padding: 0 16px 16px; white-space: pre-wrap; font: 0.84rem/1.55 var(--font-mono); color: var(--ink); }
+
+.check { list-style: none; padding: 0; }
+.check li { padding-left: 28px; position: relative; }
+.check li::before { content: ""; position: absolute; left: 0; top: 4px; width: 15px; height: 15px; border: 1.5px solid var(--muted); border-radius: 3px; }
+
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.small { font-size: 0.88rem; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="col">
+  <span class="eyebrow">804 Hacks · Oct 18, 2026 · Richmond, VA</span>
+  <h1>Wetbulb</h1>
+  <p class="lede">The game plan: what the idea is, what you'll ask Claude for and when, and wireframes for every screen. The rules allow you to bring plans and wireframes. Write all code after hacking starts at 10:00 AM.</p>
+
+  <div class="callout"><strong>Hard deadline: 5:00 PM.</strong> Hacking starts at 10:00, so you have 7 hours. Judging starts at 5:15. Write no code before 10:00, not even "just testing."</div>
+
+  <!-- ============ 1. PLAIN ENGLISH ============ -->
+  <h2>The idea in plain English</h2>
+  <div class="steps">
+    <div class="step">
+      <span class="eyebrow">1 · Computers get hot</span>
+      <h3>Data centers sweat</h3>
+      <p>A data center is a warehouse full of computers that run hot. Many cool off with <strong>cooling towers</strong>, which work like sweating: they evaporate water to carry the heat away.</p>
+    </div>
+    <div class="step">
+      <span class="eyebrow">2 · Sticky days are bad</span>
+      <h3>Humid heat wastes water</h3>
+      <p>Sweating barely works on a hot, sticky day, and cooling towers are the same: they burn through more water. The number that measures this is the <span class="w">wet-bulb temperature</span>. You calculate it from temperature plus humidity, which is exactly what your DHT11 sensor reads.</p>
+    </div>
+    <div class="step">
+      <span class="eyebrow">3 · Power changes hourly</span>
+      <h3>The grid has good and bad hours</h3>
+      <p>Virginia's electricity comes from a mix of coal, gas, nuclear and solar, and the mix shifts every hour. Some hours make more <span class="c">CO₂</span>. Power plants also use water: nuclear makes no smoke but uses a lot of water.</p>
+    </div>
+    <div class="step">
+      <span class="eyebrow">4 · The trick</span>
+      <h3>Run the job at the right time</h3>
+      <p>Lots of AI work can wait a few hours, like training a model or making backups. Wetbulb looks at the next 24 hours and picks the <span class="p">window</span> with the least carbon <em>and</em> the least water.</p>
+    </div>
+  </div>
+
+  <h3>The surprise that makes it interesting</h3>
+  <p>Carbon and water might want <strong>different hours</strong>. Cool nights save cooling water, but if the night grid runs mostly on nuclear, it uses a lot of power-plant water. A plain carbon tracker can't see that. The first thing your Kaggle script checks is which story the data actually tells:</p>
+  <div class="two">
+    <div class="step"><span class="eyebrow">If they conflict</span><p><strong>"The cleanest hour is the thirstiest hour."</strong> The slider on the dashboard becomes the star: you pick how much you care about carbon versus water.</p></div>
+    <div class="step"><span class="eyebrow">If they agree</span><p><strong>"The night shift wins twice."</strong> The story is simpler. One shift saves both, and nobody schedules for water today.</p></div>
+  </div>
+
+  <h3>Your 15-second pitch</h3>
+  <p class="pitch">"Virginia has more data centers than anywhere on Earth, and they have two footprints, carbon and water. Everyone tracks the first. Wetbulb tracks both, live, and tells a data center when to run its AI jobs. Watch our rack live through a real July day in Ashburn."</p>
+
+  <!-- ============ 2. HOW IT FITS ============ -->
+  <h2>How the pieces fit</h2>
+  <div class="scroll">
+    <svg viewBox="0 0 760 210" width="760" role="img" aria-label="Data flow: Kaggle analysis and live sensor feed the dashboard, which drives the LCD and fan">
+      <g font-size="12" fill="var(--ink)">
+        <rect x="10" y="20" width="190" height="64" rx="8" fill="var(--carbon-soft)" stroke="var(--wire)" stroke-width="1.5"/>
+        <text x="22" y="45" font-weight="600">Kaggle script</text>
+        <text x="22" y="64" fill="var(--muted)">fuel mix + weather → JSON</text>
+        <rect x="10" y="126" width="190" height="64" rx="8" fill="var(--water-soft)" stroke="var(--wire)" stroke-width="1.5"/>
+        <text x="22" y="151" font-weight="600">Arduino + DHT11</text>
+        <text x="22" y="170" fill="var(--muted)">temp + humidity, every 2 s</text>
+        <rect x="285" y="62" width="200" height="86" rx="8" fill="var(--pick-soft)" stroke="var(--pick)" stroke-width="1.5"/>
+        <text x="297" y="88" font-weight="600">Dashboard (Chrome)</text>
+        <text x="297" y="108" fill="var(--muted)">+ live Open-Meteo forecast</text>
+        <text x="297" y="128" fill="var(--muted)">scores 24 h → picks window</text>
+        <rect x="570" y="20" width="180" height="64" rx="8" fill="var(--sheet)" stroke="var(--wire)" stroke-width="1.5"/>
+        <text x="582" y="45" font-weight="600">8x2 LCD</text>
+        <text x="582" y="64" fill="var(--muted)">WAIT 3h / -38% H2O</text>
+        <rect x="570" y="126" width="180" height="64" rx="8" fill="var(--sheet)" stroke="var(--wire)" stroke-width="1.5"/>
+        <text x="582" y="151" font-weight="600">Fan via HW-095</text>
+        <text x="582" y="170" fill="var(--muted)">spins = "job running"</text>
+        <text x="285" y="182" fill="var(--muted)">Manim slides read results.json</text>
+      </g>
+      <g stroke="var(--muted)" stroke-width="1.5" fill="none" marker-end="url(#ah)">
+        <path d="M200 52 L280 88"/><path d="M200 158 L280 124"/>
+        <path d="M485 92 L565 56"/><path d="M485 120 L565 156"/>
+      </g>
+      <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--muted)"/></marker></defs>
+    </svg>
+  </div>
+  <p class="small">The Arduino doesn't decide anything. It sends readings to the browser, and the browser sends back the two LCD lines and the fan speed. That keeps the Arduino code tiny and keeps all the logic in one place.</p>
+
+  <!-- ============ 3. RUN SHEET ============ -->
+  <h2>Tomorrow, hour by hour</h2>
+  <p>Blue rows are when you ask Claude for something. The ready-to-paste prompts are further down this page.</p>
+  <div class="run">
+    <div class="run-row"><time>9:00</time><div>Check in and eat. Set up the laptop, open Kaggle, plug in the Arduino. <strong>Write no code yet.</strong></div></div>
+    <div class="run-row ask"><time>10:00</time><div><span class="tag">ASK 1</span><strong>Kaggle analysis script.</strong> Paste it into your prepared notebook (datasets already attached) and click Run All. It should finish in under 10 minutes.</div></div>
+    <div class="run-row ask"><time>10:10</time><div><span class="tag">ASK 2</span><strong>Arduino sketch.</strong> While Kaggle runs, wire the board from the pin map below, upload the sketch, and check the Serial Monitor shows readings.</div></div>
+    <div class="run-row hard"><time>10:45</time><div><strong>Decision point.</strong> Read the Kaggle printout: do carbon and water conflict or agree? Pick your story. Download <code>wetbulb_profile.json</code>, <code>results.json</code> and the PNG charts.</div></div>
+    <div class="run-row ask"><time>11:00</time><div><span class="tag">ASK 3</span><strong>Dashboard</strong> (single HTML file plus Web Serial). Give Claude <code>wetbulb_profile.json</code>. Iterate until the live sensor drives the LCD and fan.</div></div>
+    <div class="run-row ask"><time>12:30</time><div><span class="tag">ASK 4</span><strong>Manim slides</strong> (they read <code>results.json</code> directly). Start a <code>-qm</code> render in the background before lunch.</div></div>
+    <div class="run-row"><time>1:00</time><div>Lunch. The render keeps going.</div></div>
+    <div class="run-row"><time>1:45</time><div>Build the cardboard "server rack" and the two weather cups (JULY has a damp sponge, JANUARY a cold pack). Test the replay and demo mode with the Arduino unplugged.</div></div>
+    <div class="run-row ask"><time>3:00</time><div><span class="tag">ASK 5</span><strong>Pitch script and judge Q&amp;A.</strong> Rehearse the 90-second table version and the 3-minute version out loud, at least three times.</div></div>
+    <div class="run-row hard"><time>3:45</time><div><strong>Feature freeze.</strong> From here, only fix bugs. Record a 60-second backup video of the demo working.</div></div>
+    <div class="run-row"><time>4:15</time><div>Final <code>-qh</code> slide render. Write the submission text and upload the code, video and slides.</div></div>
+    <div class="run-row hard"><time>4:45</time><div><strong>Submit.</strong> Leave 15 minutes of buffer before the 5:00 deadline.</div></div>
+  </div>
+
+  <!-- ============ 4. KAGGLE ============ -->
+  <h2>Ask 1: the Kaggle script</h2>
+  <p>This is one notebook cell you can paste and run. It finds every file with a recursive search, so it doesn't break if Kaggle mounts folders at a slightly different path.</p>
+
+  <h3>Datasets to attach tonight</h3>
+  <p class="small">I confirmed each one exists on Kaggle and checked its file list on Oct 17.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Dataset (Add Input → search)</th><th>File and expected path</th><th>Used for</th></tr></thead>
+    <tbody>
+      <tr><td><strong>US Grid Hourly Demand &amp; Generation (EIA-930)</strong><br><code>kaitoland/us-grid-hourly-demand-generation-eia-930</code></td><td><code>/kaggle/input/us-grid-hourly-demand-generation-eia-930/ba_hourly_generation_by_fuel.csv</code> (90 MB)</td><td><strong>Core data.</strong> PJM fuel mix per hour, Jan 2024 to Oct 2026, used for carbon and power-plant water. Filter <code>ba_code == "PJM"</code>.</td></tr>
+      <tr><td><strong>PJM Hourly Demand + Population-Weighted Weather</strong><br><code>arimancy/pjm-hourly-demand-weather</code></td><td><code>/kaggle/input/pjm-hourly-demand-weather/pjm_demand_weather_hourly_v1.parquet</code></td><td>Washington DC temperature (<code>temp_c_washington_dc</code>) and PJM demand, from 2015 to Sep 2026. Used to cross-check the weather and add demand context.</td></tr>
+      <tr><td><strong>Historical Hourly Weather 2012–2017</strong><br><code>selfishgene/historical-hourly-weather-data</code></td><td><code>…/humidity.csv</code>, <code>…/temperature.csv</code> (Philadelphia column)</td><td><strong>Offline fallback</strong> if Kaggle internet is off: a typical humidity for each month and hour.</td></tr>
+      <tr><td><strong>Hourly Energy Consumption</strong><br><code>robikscube/hourly-energy-consumption</code></td><td><code>…/DOM_hourly.csv</code></td><td>Optional: Dominion (Virginia) demand, 2005–2018, for a "demand keeps growing" chart.</td></tr>
+      <tr><td><strong>Open-Meteo archive API</strong> (no key, needs Internet ON)</td><td><code>archive-api.open-meteo.com/v1/archive</code>, Ashburn 39.04, −77.49</td><td><strong>Primary humidity and wet-bulb source</strong> for 2024–2026. It returns <code>wet_bulb_temperature_2m</code> directly (I tested it tonight).</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>What the script does</h3>
+  <ol>
+    <li>Loads the PJM fuel mix and computes <span class="c">carbon (g CO₂/kWh)</span> and <span class="w">power-plant water (L/kWh)</span> for every hour.</li>
+    <li>Pulls Ashburn temperature, humidity and wet-bulb for the same hours, falling back to the Philadelphia climatology if needed.</li>
+    <li>Computes data center cooling water from the wet-bulb temperature (model below).</li>
+    <li><strong>Story check:</strong> month × hour heatmaps for both footprints, the correlation between them, and the number of days where the cleanest window ≠ the thirstiest window. It prints a clear verdict: CONFLICT or ALIGNED.</li>
+    <li><strong>Backtest:</strong> a 4-hour, 500 kW job submitted at 9 AM with a 24-hour deadline, run every day. Compares 4 policies: run now, carbon-only, water-only, and Wetbulb (blended).</li>
+    <li>Trade-off curve: sweeps the slider from all-carbon to all-water and plots CO₂ saved against water saved.</li>
+    <li>Virginia scale-up: if a given share of NoVA's data center load were flexible and shifted, how many tons of CO₂ and Olympic pools of water would that save each year? Assumptions are printed.</li>
+    <li>Exports <code>wetbulb_profile.json</code> (for the dashboard), <code>results.json</code> (for the slides), <code>replay_days.json</code> (3 real Ashburn days for the replay demo) and 5 PNG charts.</li>
+  </ol>
+
+  <h3>The math (one formula per idea)</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Quantity</th><th>How</th><th>Source to cite</th></tr></thead>
+    <tbody>
+      <tr><td>Carbon per kWh</td><td class="mono">Σ(MW_fuel × factor) / Σ MW<br>coal 1000 · gas 430 · oil 800 · other 500 · rest 0 (kg/MWh)</td><td>Approximate direct emission factors; EIA-930 data</td></tr>
+      <tr><td>Power-plant water</td><td class="mono">Σ(MW_fuel × L/kWh) / Σ MW<br>nuclear 2.54 · coal 2.60 · gas 0.75 · oil 2.6 · solar ≈0 · wind 0</td><td>NREL, Macknick et al. 2012 (median consumption, cooling-tower plants)</td></tr>
+      <tr><td>Cooling water</td><td class="mono">WUE = clip(0.15 × (T<sub>wb</sub> − 10 °C), 0, 3) L/kWh</td><td>Illustrative model: free cooling below 10 °C wet-bulb, tuned to the ≈1.8 L/kWh US average (LBNL 2016). <em>Call it a model.</em></td></tr>
+      <tr><td>Total water</td><td class="mono">W = WUE + PUE × grid water (PUE = 1.3)</td><td>Standard water-footprint method</td></tr>
+      <tr><td>Wetbulb score</td><td class="mono">S(h) = w·C(h)/C̄ + (1−w)·W(h)/W̄ → choose the window with the lowest mean S</td><td>Yours. This is the original part.</td></tr>
+    </tbody>
+  </table></div>
+
+  <!-- ============ 5. ARDUINO ============ -->
+  <h2>Ask 2: the hardware</h2>
+  <div class="two">
+    <div>
+      <h3>Pin map</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Part</th><th>Pin</th><th>Arduino</th></tr></thead>
+        <tbody>
+          <tr><td>LCD</td><td>RS · E</td><td class="num">D12 · D11</td></tr>
+          <tr><td>LCD</td><td>D4 · D5 · D6 · D7</td><td class="num">D5 · D4 · D3 · D2</td></tr>
+          <tr><td>LCD</td><td>VSS · RW · VDD</td><td class="num">GND · GND · 5V</td></tr>
+          <tr><td>LCD</td><td>V0 (contrast)</td><td class="num">pot wiper, or ~1–2 kΩ to GND</td></tr>
+          <tr><td>DHT11</td><td>DATA · VCC · GND</td><td class="num">D7 · 5V · GND</td></tr>
+          <tr><td>HW-095</td><td>ENA (pull the jumper)</td><td class="num">D9 (PWM)</td></tr>
+          <tr><td>HW-095</td><td>IN1 · IN2</td><td class="num">D8 · D10</td></tr>
+          <tr><td>HW-095</td><td>12V · GND</td><td class="num">battery + · battery − <strong>and</strong> Arduino GND</td></tr>
+        </tbody>
+      </table></div>
+      <p class="small">Common mistake: the battery's ground must also connect to the Arduino's GND, or the fan won't respond. A bare 4-pin DHT11 needs a 10 kΩ pull-up resistor from DATA to 5V. The 3-pin module version has one built in.</p>
+    </div>
+    <div>
+      <h3>Messages between Arduino and browser</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Direction</th><th>Line</th></tr></thead>
+        <tbody>
+          <tr><td>Arduino → PC, every 2 s</td><td class="mono">S,23.4,61</td></tr>
+          <tr><td>PC → Arduino</td><td class="mono">L,WAIT 3h,-38%H2O,0</td></tr>
+          <tr><td>PC → Arduino</td><td class="mono">L,RUN NOW,-12%CO2,200</td></tr>
+        </tbody>
+      </table></div>
+      <p class="small">Format: <code>S,tempC,humidity</code> and <code>L,line1,line2,fanSpeed(0–255)</code>. Each LCD line holds 8 characters at most.</p>
+    </div>
+  </div>
+
+  <h3>LCD screens (8 × 2 characters)</h3>
+  <div class="lcds">
+    <div class="lcd-card"><div class="lcd" data-l1="WETBULB" data-l2="BOOTING"></div><p><strong>Boot.</strong> Shown until the browser connects.</p></div>
+    <div class="lcd-card"><div class="lcd" data-l1="WAIT 3h" data-l2="-38%H2O"></div><p><strong>Waiting.</strong> Fan is off. Shows the biggest saving.</p></div>
+    <div class="lcd-card"><div class="lcd" data-l1="RUN NOW" data-l2="WB 15.3C"></div><p><strong>Running.</strong> Fan spins. Shows the live wet-bulb.</p></div>
+    <div class="lcd-card"><div class="lcd" data-l1="HUMID!" data-l2="H2O +41%"></div><p><strong>July cup on.</strong> The humid cup went over the sensor and the water cost spiked.</p></div>
+    <div class="lcd-card"><div class="lcd" data-l1="FREECOOL" data-l2="0L WATER"></div><p><strong>Free cooling.</strong> Wet-bulb is below 10 °C, so outside air does the cooling for free. You see it when the replay reaches a January night. The fan spins.</p></div>
+  </div>
+
+  <h3>What the DHT11 measures</h3>
+  <p>The sensor reads the <strong>air right around it</strong>: temperature (°C) and relative humidity (%), about once a second. It's accurate to roughly ±2 °C and ±5% RH. In the story, it stands for the <strong>outdoor air going into a data center's cooling tower</strong> in Ashburn. It doesn't measure how hot the servers are. Cooling-tower water depends on the outside air, not on how hot the chips run.</p>
+  <p>The dashboard turns each reading into a wet-bulb temperature, then into cooling water per kWh. The sensor stands in for the current hour. The other 23 hours come from the forecast.</p>
+
+  <h3>The demo system: you run it, not the judges</h3>
+  <p>A judge's breath varies from person to person, and the room's air changes during the day. So you run the demo in three layers. Each takes seconds, and each still works if the one before it fails.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Layer</th><th>What you do</th><th>What judges see</th><th>Why it's reliable</th></tr></thead>
+    <tbody>
+      <tr><td><strong>1 · Live air</strong><br><span class="small">10 s</span></td><td>Point at the live panel: "This is the air in this room, right now."</td><td>The temperature, humidity and wet-bulb update every second</td><td>Nothing can go wrong. It only proves the sensor is real.</td></tr>
+      <tr><td><strong>2 · Weather chamber</strong><br><span class="small">20 s</span></td><td>The DHT11 sits under a clear cup. Swap in the <strong>JULY cup</strong>, which has a damp sponge (warm water if you can get it) taped inside.</td><td>Humidity climbs toward 85–95% in about 10–20 s, the water cost jumps, and the LCD shows <code>HUMID!</code></td><td>You control the timing, and the same cup gives the same result every time. To reset, lift the cup and the rack's fan blows room air over the sensor.</td></tr>
+      <tr><td><strong>3 · Real-day replay</strong><br><span class="small">30 s · the main event</span></td><td>Press <strong>Replay a real day</strong>. The default is the most humid day of summer 2025, which the Kaggle script finds.</td><td>24 real hours play in 30 seconds: the clock runs, the gold window moves, the LCD and fan switch exactly on schedule, and a counter adds up the liters and kg saved</td><td>It's driven only by real data, so every judge sees exactly the same thing.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Then hand the judge the <strong>carbon ↔ water slider</strong>. It's hands-on, and nothing they do with it can break the demo.</p>
+  <p class="small">The JANUARY cup has a squeeze-activated cold pack inside. It cools the chamber a few degrees, so the water cost visibly drops, but at room temperature it probably won't reach true free cooling. That's fine, because the January replay shows <code>FREECOOL</code>. Skip the hair dryer: it dries the air and can go past the sensor's 50 °C limit. If the sensor misbehaves, switch to demo mode. Its badge stays on screen, so you're never passing off fake readings as real.</p>
+
+  <h3>The table setup</h3>
+  <div class="wf">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px">
+      <div class="box"><span class="lbl">Cardboard "server rack"</span><span>LCD in the front window · fan on top (the "exhaust") · DHT11 on the side under a clear cup (the "weather chamber") labeled <strong>"COOLING TOWER AIR INTAKE"</strong>, with the JULY and JANUARY swap cups next to it</span></div>
+      <div class="box"><span class="lbl">Laptop</span><span>Dashboard full screen, facing the judges. Slides in a second tab.</span></div>
+      <div class="box"><span class="lbl">Printed card</span><span>One big chart from Kaggle (the carbon vs water heatmap) and a QR code to the repo.</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 6. DASHBOARD WIREFRAME ============ -->
+<div class="col" style="margin-top:18px">
+  <h2>Ask 3: the dashboard</h2>
+  <p>This is a single HTML file running in Chrome. It needs Chrome because of Web Serial, and you serve it with <code>python3 -m http.server</code> so Web Serial is allowed. Charts use Chart.js. It fetches the live Open-Meteo forecast. It has a <strong>replay mode</strong> that plays a real Ashburn day in 30 seconds, and a <strong>demo mode</strong> that replaces the sensor with an on-screen slider, so it still works if a wire comes loose.</p>
+</div>
+<div class="wide" style="margin-top:14px">
+  <div class="sheet-label"><span class="eyebrow">Wireframe · laptop, 1440 wide</span><span class="small">Gray = layout only. The colors show which footprint each element belongs to.</span></div>
+  <div class="scroll"><div class="wf dash">
+    <div class="dash-top">
+      <span class="big" style="font-size:1.2rem">Wetbulb</span>
+      <span style="display:flex;gap:8px;flex-wrap:wrap">
+        <span class="pill" style="color:var(--ok);border-color:var(--ok)">● Sensor live · 22.1 °C · 61% → wet-bulb 17.0 °C</span>
+        <span class="btn">Connect Arduino</span><span class="btn">▶ Replay a real day</span><span class="btn">Demo mode</span>
+      </span>
+    </div>
+    <div class="dash-main">
+      <div class="box">
+        <span class="lbl">Decision</span>
+        <span class="big">Wait 3 hours. Run 1:00–5:00 AM.</span>
+        <span style="display:flex;gap:8px;flex-wrap:wrap"><span class="pill c">−24% CO₂</span><span class="pill w">−38% water</span><span class="pill p">saves 612 L · 180 kg CO₂</span></span>
+        <svg viewBox="0 0 640 170" width="100%" role="img" aria-label="Sketch of a 24-hour chart with carbon and water lines and a highlighted window">
+          <rect x="40" y="10" width="590" height="130" fill="none" stroke="var(--rule)"/>
+          <rect x="40" y="10" width="98" height="130" fill="var(--carbon-soft)"/>
+          <rect x="384" y="10" width="98" height="130" fill="var(--pick-soft)" stroke="var(--pick)" stroke-dasharray="4 3"/>
+          <polyline fill="none" stroke="var(--carbon)" stroke-width="2.5" points="40,52 89,48 138,44 187,40 236,46 285,58 334,70 384,84 433,90 482,86 531,70 580,58 630,50"/>
+          <polyline fill="none" stroke="var(--water)" stroke-width="2.5" stroke-dasharray="6 4" points="40,40 89,36 138,34 187,44 236,62 285,86 334,104 384,112 433,116 482,110 531,92 580,70 630,56"/>
+          <g font-size="11" fill="var(--muted)">
+            <text x="44" y="158">9 AM</text><text x="182" y="158">3 PM</text><text x="330" y="158">9 PM</text><text x="470" y="158">3 AM</text><text x="590" y="158">9 AM</text>
+            <text x="46" y="26">run now</text><text x="390" y="26" fill="var(--pick)">Wetbulb pick</text>
+          </g>
+        </svg>
+        <span class="note">Solid = carbon (g/kWh) · dashed = water (L/kWh) · gray band = run-now window · gold band = chosen window</span>
+      </div>
+      <div class="box">
+        <span class="lbl">Live air at the intake</span>
+        <span class="big">17.0 °C wet-bulb</span>
+        <span>Cooling water right now: <strong style="color:var(--water)">1.05 L/kWh</strong></span>
+        <svg viewBox="0 0 220 60" width="100%" aria-hidden="true"><polyline fill="none" stroke="var(--water)" stroke-width="2" points="0,40 30,41 60,39 90,40 120,38 150,20 170,12 190,16 220,22"/><circle cx="170" cy="12" r="3.5" fill="var(--water)"/></svg>
+        <span class="note">Spike = the JULY cup went on</span>
+        <span class="pill w" style="align-self:flex-start">Swap the weather cup →</span>
+        <span class="lbl" style="margin-top:8px">Rack display (mirrors the real LCD)</span>
+        <div class="lcd mini" data-l1="WAIT 3h" data-l2="-38%H2O"></div>
+        <span class="note">Always shows exactly what the LCD shows</span>
+      </div>
+    </div>
+    <div class="dash-row">
+      <div class="box">
+        <span class="lbl">What do you care about?</span>
+        <div class="slider" aria-hidden="true"></div>
+        <span style="display:flex;justify-content:space-between"><span class="c">Carbon</span><span class="w">Water</span></span>
+        <span class="note">Dragging it moves the gold window live</span>
+      </div>
+      <div class="box">
+        <span class="lbl">Job</span>
+        <span>Length <span class="btn">4 h</span> · Power <span class="btn">500 kW</span></span>
+        <span>Deadline <span class="btn">24 h</span></span>
+      </div>
+      <div class="box">
+        <span class="lbl">If Northern Virginia did this</span>
+        <span class="big" style="font-size:1.2rem">≈ X Olympic pools / yr</span>
+        <span>≈ Y tons CO₂ / yr · from results.json</span>
+      </div>
+    </div>
+    <div class="box">
+      <span class="lbl">The insight (from Kaggle)</span>
+      <span>Two heatmaps side by side, month × hour: <span class="c">carbon</span> | <span class="w">water</span>, with a headline above them: "Cleanest ≠ thirstiest on N% of days" (or "Night wins twice")</span>
+    </div>
+  </div></div>
+</div>
+
+<div class="col" style="margin-top:18px">
+  <h3>One design for the screen and the rack</h3>
+  <p>The dashboard makes every decision and sends the LCD its text, so the two can never disagree. Design the dashboard around these states. The LCD, the fan and the on-screen rack display all follow them.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>State</th><th>When</th><th>LCD</th><th>Dashboard</th><th>Fan</th><th>Color</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Not connected</strong></td><td>No serial link yet</td><td class="num">WETBULB / BOOTING</td><td>Gray "Connect Arduino" banner</td><td>Off</td><td><span class="sw" style="background:var(--wire)"></span>Neutral</td></tr>
+      <tr><td><strong>Waiting</strong></td><td>The best window is later</td><td class="num">WAIT 3h / -38%H2O</td><td>Gold decision card, gold band on the chart</td><td>Off</td><td><span class="sw" style="background:var(--pick)"></span>Gold</td></tr>
+      <tr><td><strong>Running</strong></td><td>The best window is now</td><td class="num">RUN NOW / WB 15.3C</td><td>Green "Running now" card</td><td>On</td><td><span class="sw" style="background:var(--ok)"></span>Green</td></tr>
+      <tr><td><strong>Humid!</strong></td><td>Wet-bulb rose 2 °C+ within 10 s</td><td class="num">HUMID! / H2O +41%</td><td>Live panel pulses blue, toast "Water cost +41%"</td><td>Off</td><td><span class="sw" style="background:var(--water)"></span>Blue</td></tr>
+      <tr><td><strong>Free cooling</strong></td><td>Wet-bulb below 10 °C</td><td class="num">FREECOOL / 0L WATER</td><td>"Free cooling: zero cooling water"</td><td>On</td><td><span class="sw" style="background:var(--water)"></span>Blue</td></tr>
+      <tr><td><strong>Demo mode</strong></td><td>No sensor, fake slider</td><td class="num">same as the active state</td><td>"Demo mode" badge in the top bar</td><td>Same as the active state</td><td><span class="sw" style="border:1.5px solid var(--wire)"></span>Outline</td></tr>
+      <tr><td><strong>Replay</strong></td><td>Playing a real day in 30 s</td><td class="num">3PM WAIT / -38%H2O</td><td>A clock and a "now" marker sweep the chart, and a savings counter runs</td><td>Follows the schedule</td><td><span class="sw" style="background:var(--pick)"></span>Gold</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small">Color meanings, used the same way everywhere: <span class="c">slate = carbon</span>, <span class="w">blue = water</span>, <span class="p">gold = the chosen window / waiting</span>, green = running. Keep the wording identical too: if the LCD says WAIT, the dashboard says Wait.</p>
+</div>
+
+<!-- ============ 7. SLIDES STORYBOARD ============ -->
+<div class="col" style="margin-top:18px">
+  <h2>Ask 4: the Manim slides</h2>
+  <p>About ten slides in the same dark style as your old deck, built with <code>manim-slides</code>. <code>slides.py</code> loads <code>results.json</code> itself, so you never paste numbers in by hand. Render with <code>-qm</code> while you iterate and <code>-qh</code> once at 4:15.</p>
+</div>
+<div class="wide" style="margin-top:14px">
+  <div class="story">
+    <div class="frame"><div class="scr"><span class="num">01</span><b>WETBULB</b>a rack outline; a smoke wisp and a water drop rise out of it</div><p><strong>Title.</strong> The team name and the one-line pitch.</p></div>
+    <div class="frame"><div class="scr"><span class="num">02</span><b>#1 on Earth</b>a Virginia map; dots pile up around Loudoun<br>"≈900M gal of drinking water, 2023"</div><p><strong>Hook.</strong> Local scale and a real water number, with sources on the slide.</p></div>
+    <div class="frame"><div class="scr"><span class="num">03</span><b>Two footprints</b>a CO₂ cloud and a water drop grow side by side<br>"everyone tracks one"</div><p><strong>Problem.</strong> Carbon gets tracked. Water mostly doesn't.</p></div>
+    <div class="frame"><div class="scr"><span class="num">04</span><b>Wet-bulb</b>a sweating thermometer; T + RH → T<sub>wb</sub><br>then the WUE line rises</div><p><strong>Why humidity matters.</strong> Sweating explained in 15 seconds.</p></div>
+    <div class="frame"><div class="scr"><span class="num">05</span><b>The twist</b>two 24 h curves; their minimums land at different hours<br>(or at the same one)</div><p><strong>Kaggle insight.</strong> CONFLICT or ALIGNED, whichever the data says.</p></div>
+    <div class="frame"><div class="scr"><span class="num">06</span><b>S(h) = w·C + (1−w)·W</b>a 4 h window slides along the timeline and the minimum lights up gold</div><p><strong>How it decides.</strong> The math, animated. Judges like seeing the formula.</p></div>
+    <div class="frame"><div class="scr"><span class="num">07</span><b>Backtest</b>4 bars: now · carbon-only · water-only · Wetbulb<br>+ the trade-off curve</div><p><strong>Results.</strong> Real numbers from 2024–2026 PJM data.</p></div>
+    <div class="frame"><div class="scr"><span class="num">08</span><b>Scale it to NoVA</b>a counter ticks up: tons of CO₂, then Olympic pools</div><p><strong>Impact.</strong> Assumptions printed small at the bottom.</p></div>
+    <div class="frame"><div class="scr"><span class="num">09</span><b>LIVE DEMO →</b>live air · JULY cup · a real day replayed</div><p><strong>Hand-off</strong> to the rack and the dashboard.</p></div>
+    <div class="frame"><div class="scr"><span class="num">10</span><b>What's next</b>live PJM feed · Kubernetes plugin · marginal emissions</div><p><strong>Close.</strong> Then the team.</p></div>
+  </div>
+</div>
+
+<div class="col" style="margin-top:18px">
+  <!-- ============ 8. PROMPTS ============ -->
+  <h2>Prompts to paste tomorrow</h2>
+  <p>Each one tells Claude to reread this plan first, so you don't have to re-explain anything.</p>
+  <details><summary>Ask 1 · Kaggle script (10:00)</summary><pre>Hacking has started at 804 Hacks. Read my "Wetbulb Game Plan" artifact and write Ask 1: one Kaggle notebook cell, exactly as specified there. Find input files by recursive search under /kaggle/input. Use the Open-Meteo archive for Ashburn wet-bulb 2024-2026, with the selfishgene Philadelphia climatology as a fallback if there's no internet. Print a clear CONFLICT/ALIGNED verdict, the backtest table for the 4 policies, and the NoVA scale-up with its assumptions. Also export replay_days.json: 3 real Ashburn days, hourly (the most humid day of summer 2025, the coldest winter night, and the day with the biggest carbon-vs-water conflict), with every field the dashboard needs. Save wetbulb_profile.json, results.json, replay_days.json and the PNG charts to /kaggle/working. It has to run first try: guard every step and print progress.</pre></details>
+  <details><summary>Ask 2 · Arduino sketch (10:10)</summary><pre>Write Ask 2 from the Wetbulb plan: an Arduino Uno sketch using the plan's pin map and serial protocol exactly (DHT11 on D7, 8x2 LCD on LiquidCrystal(12,11,5,4,3,2), L298N ENA D9 / IN1 D8 / IN2 D10). Show WETBULB/BOOTING until the first L message arrives. Also list the libraries to install and give me a 2-minute wiring test.</pre></details>
+  <details><summary>Ask 3 · Dashboard (11:00)</summary><pre>Write Ask 3 from the Wetbulb plan: the single-file dashboard matching the wireframe. Requirements: Web Serial connect button, a replay mode that plays replay_days.json (24 hours in 30 seconds) and drives the chart, LCD and fan in sync, demo mode with a fake sensor slider, live Open-Meteo forecast for Ashburn, wetbulb_profile.json embedded inline, the scoring formula from the plan, a carbon-vs-water slider that moves the chosen window live, and L lines sent back to the Arduino. Big, readable, looks great on a laptop facing judges. I'll serve it with python3 -m http.server.</pre></details>
+  <details><summary>Ask 4 · Manim slides (12:30)</summary><pre>Write Ask 4 from the Wetbulb plan: slides.py for manim-slides following the 10-frame storyboard, same dark palette as my old deck, loading every number from results.json (with sensible placeholders if a key is missing). Keep each animation short so a -qm render finishes in under 10 minutes. Give me the render and convert commands.</pre></details>
+  <details><summary>Ask 5 · Pitch and Q&amp;A (3:00)</summary><pre>Using my real results (pasted below), write a 90-second table pitch and a 3-minute stage pitch for Wetbulb, built around the three-layer demo (live air, JULY cup, real-day replay). Then list the 10 hardest questions judges might ask, each with a 2-sentence answer.</pre></details>
+
+  <!-- ============ 9. Q&A PREP ============ -->
+  <h2>Questions judges will ask</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Question</th><th>Short answer</th></tr></thead>
+    <tbody>
+      <tr><td>Can data centers really delay jobs?</td><td>Not all of them, but AI training, batch processing and backups are flexible. Google already shifts work by carbon. Nobody shifts by water.</td></tr>
+      <tr><td>Is your water model real?</td><td>The power-plant water figures come from NREL. The cooling curve is a simplified model tuned to the published US average, and we label it that way.</td></tr>
+      <tr><td>Average or marginal emissions?</td><td>Average, because it's public and hourly. Marginal is the better signal and the top item on our next-steps slide.</td></tr>
+      <tr><td>Why one sensor?</td><td>It stands in for the cooling tower's air intake. A real site already measures this, so Wetbulb would plug into the readings it already has.</td></tr>
+      <tr><td>What's actually new here?</td><td>Optimizing carbon <em>and</em> water together, with live wet-bulb readings, and showing the trade-off between them.</td></tr>
+    </tbody>
+  </table></div>
+
+  <!-- ============ 10. TONIGHT ============ -->
+  <h2>Tonight's checklist</h2>
+  <div class="two">
+    <div>
+      <h3>Accounts and setup (not code)</h3>
+      <ul class="check">
+        <li>Kaggle: verify your phone number so <strong>Internet ON</strong> is available</li>
+        <li>Create an empty notebook and attach the 4 datasets above</li>
+        <li>Install the Arduino IDE and the "DHT sensor library" (Adafruit). LiquidCrystal comes built in.</li>
+        <li>Check that <code>manim</code> and <code>manim-slides</code> still render, and that LaTeX is installed for formulas</li>
+        <li>Check that Chrome is up to date (Web Serial)</li>
+        <li>Save this page's link somewhere you can reach tomorrow</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Pack</h3>
+      <ul class="check">
+        <li>Arduino Uno + USB-B cable (bring a spare)</li>
+        <li>DHT11, 8x2 LCD, HW-095, breadboard, jumpers</li>
+        <li>Small DC motor or fan, 9V battery + clip</li>
+        <li>10 kΩ potentiometer or a 1–2 kΩ resistor (LCD contrast)</li>
+        <li>Cardboard box, tape, marker, scissors</li>
+        <li>The weather chamber: 3 clear plastic cups, a small sponge, a water bottle, and 2 instant cold packs (squeeze-to-activate, from any pharmacy, no freezer needed)</li>
+        <li>Laptop charger, extension cord, phone hotspot</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>If something breaks</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Problem</th><th>Fallback</th></tr></thead>
+    <tbody>
+      <tr><td>Kaggle has no internet</td><td>The script switches to the Philadelphia humidity climatology on its own.</td></tr>
+      <tr><td>LCD shows blocks or nothing</td><td>Adjust contrast (V0). If it's still dead, show the LCD text on the dashboard and let the fan do the physical part.</td></tr>
+      <tr><td>Web Serial won't connect</td><td>Turn on demo mode and keep going. Separately, ask for a 20-line Python <code>pyserial</code> bridge.</td></tr>
+      <tr><td>Sensor is slow or the room is already humid</td><td>Skip the cup and go straight to the replay. It doesn't use the sensor at all.</td></tr>
+      <tr><td>Manim render is slow</td><td>Render at <code>-ql</code>. Your Kaggle PNGs work as static slides.</td></tr>
+      <tr><td>Carbon and water agree</td><td>Use the "night shift wins twice" story. It still works.</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small">Sources for the facts above: EIA Form EIA-930 via Kaggle (kaitoland); NREL, Macknick et al. 2012; JLARC "Data Centers in Virginia," Dec 2024; Loudoun water figures reported by Cardinal News and the Piedmont Environmental Council. Check each number on the source before putting it on a slide.</p>
+</div>
+
+<script>
+document.querySelectorAll('.lcd').forEach(function (el) {
+  [el.dataset.l1, el.dataset.l2].forEach(function (line) {
+    var s = (line || '').padEnd(8, ' ').slice(0, 8);
+    for (var i = 0; i < 8; i++) {
+      var c = document.createElement('span');
+      c.textContent = s[i] === ' ' ? ' ' : s[i];
+      el.appendChild(c);
+    }
+  });
+});
+</script>

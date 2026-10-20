@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wetbulb AI · What-If Data Center ROI & Environmental Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #030712;
+      --panel: rgba(8, 15, 30, 0.75);
+      --line: rgba(148, 163, 214, 0.14);
+      --water: #38bdf8;
+      --eco: #34d399;
+      --carbon: #a78bfa;
+      --muted: #94a3b8;
+      --sans: "IBM Plex Sans", sans-serif;
+      --mono: "JetBrains Mono", monospace;
+      --display: "Outfit", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: #f8fafc;
+      font-family: var(--sans);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+    .ambient {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(circle at 60% 15%, rgba(52, 211, 153, 0.12), transparent 60%),
+                  radial-gradient(circle at 20% 80%, rgba(56, 189, 248, 0.08), transparent 50%);
+      z-index: 0;
+    }
+    .wrap {
+      position: relative;
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 24px 20px 80px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      z-index: 1;
+    }
+
+    header.top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .brand h1 {
+      font: 800 1.6rem var(--display);
+      margin: 0;
+      letter-spacing: -0.02em;
+    }
+    .brand p {
+      margin: 2px 0 0;
+      font-size: 0.8rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .eco-tag {
+      font: 700 0.68rem var(--mono);
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: rgba(52, 211, 153, 0.18);
+      color: #6ee7b7;
+      border: 1px solid rgba(52, 211, 153, 0.35);
+    }
+
+    .site-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(6, 12, 28, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 5px 6px;
+      overflow-x: auto;
+      max-width: 100%;
+    }
+    .nav-tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      color: var(--muted);
+      text-decoration: none;
+      font: 600 0.86rem var(--display);
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      white-space: nowrap;
+    }
+    .nav-tab:hover {
+      color: #f8fafc;
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .nav-tab.active {
+      color: #030712;
+      background: linear-gradient(135deg, #38bdf8, #34d399);
+      box-shadow: 0 4px 14px rgba(56, 189, 248, 0.4);
+      font-weight: 700;
+    }
+
+    .card {
+      border-radius: 20px;
+      padding: 24px;
+      background: var(--panel);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--line);
+      box-shadow: 0 16px 40px -15px rgba(0, 0, 0, 0.7);
+      transform-style: preserve-3d;
+      transition: transform 0.15s ease, border-color 0.2s ease;
+    }
+    .card:hover {
+      border-color: rgba(56, 189, 248, 0.35);
+    }
+
+    .calc-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 900px) {
+      .calc-grid { grid-template-columns: 1fr; }
+    }
+
+    .input-group {
+      margin-bottom: 20px;
+    }
+    .input-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .input-header label {
+      font: 700 0.88rem var(--display);
+      color: #f8fafc;
+    }
+    .input-header span {
+      font: 700 0.95rem var(--mono);
+      color: var(--water);
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+      outline: none;
+      cursor: grab;
+    }
+    input[type=range]:active { cursor: grabbing; }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 2px solid #030712;
+      box-shadow: 0 0 0 2px #38bdf8, 0 3px 10px rgba(56, 189, 248, 0.6);
+      cursor: grab;
+    }
+
+    .preset-pills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .pill-btn {
+      font: 600 0.76rem var(--display);
+      padding: 4px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .pill-btn:hover, .pill-btn.active {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: #38bdf8;
+      color: #ffffff;
+    }
+
+    .results-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(52, 211, 153, 0.3);
+      border-radius: 18px;
+      padding: 22px;
+    }
+    .res-stat {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      border-bottom: 1px dashed var(--line);
+      padding-bottom: 10px;
+    }
+    .res-stat span { color: var(--muted); font-size: 0.9rem; }
+    .res-stat b { font: 800 1.5rem var(--mono); color: #f8fafc; }
+
+    .btn-export {
+      font: 700 0.92rem var(--display);
+      padding: 12px 20px;
+      border-radius: 12px;
+      border: 1px solid rgba(52, 211, 153, 0.5);
+      background: linear-gradient(135deg, rgba(52, 211, 153, 0.25), rgba(56, 189, 248, 0.35));
+      color: #ffffff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-export:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(52, 211, 153, 0.4);
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient"></div>
+
+  <div class="wrap">
+    <header class="top">
+      <div class="brand">
+        <svg class="logo" viewBox="0 0 42 42" style="width:42px;height:42px;">
+          <defs>
+            <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#6ee7b7"/>
+              <stop offset="40%" stop-color="#38bdf8"/>
+              <stop offset="100%" stop-color="#818cf8"/>
+            </linearGradient>
+          </defs>
+          <ellipse cx="21" cy="36" rx="12" ry="3" fill="none" stroke="#38bdf8" stroke-width="1.3"/>
+          <path d="M21 3C17 10 10 16 10 23a11 11 0 0 0 22 0C32 16 25 10 21 3z" fill="url(#lg)"/>
+        </svg>
+        <div>
+          <h1>Wetbulb AI</h1>
+          <p>Custom Workload & What-If Environmental ROI Calculator <span class="eco-tag">🧮 ROI & AUDIT</span></p>
+        </div>
+      </div>
+    </header>
+
+    <nav class="site-nav" aria-label="Main Site Navigation">
+      <a href="index.html" class="nav-tab">⚡ Live Dispatcher</a>
+      <a href="impact.html" class="nav-tab">🎮 Public Impact</a>
+      <a href="backtest.html" class="nav-tab">📊 1,016-Day Evidence</a>
+      <a href="calculator.html" class="nav-tab active">🧮 What-If ROI Calculator</a>
+      <a href="methodology.html" class="nav-tab">📖 Methodology</a>
+    </nav>
+
+    <div>
+      <h2 style="font:800 clamp(1.8rem, 3.2vw, 2.5rem)/1.1 var(--display);letter-spacing:-0.03em;margin:0;">
+        Calculate Your Data Center's Water & Carbon Savings
+      </h2>
+      <p style="color:var(--muted);max-width:68ch;margin:6px 0 0;font-size:0.95rem;line-height:1.5;">
+        Tailor compute capacity, flexible job parameters, and utility pricing to see the exact freshwater conservation and financial ROI for your cluster.
+      </p>
+    </div>
+
+    <div class="calc-grid">
+      <section class="card">
+        <h3 style="margin:0 0 20px;font:800 1.25rem var(--display);">Workload & Facility Parameters</h3>
+
+        <div class="input-group">
+          <div class="input-header">
+            <label for="cKw">AI Cluster Power Capacity</label>
+            <span id="cKwVal">10,000 kW (10 MW)</span>
+          </div>
+          <input type="range" id="cKw" min="100" max="100000" step="100" value="10000">
+          <div class="preset-pills">
+            <button class="pill-btn" onclick="setCap(500)">500 kW</button>
+            <button class="pill-btn" onclick="setCap(2000)">2 MW</button>
+            <button class="pill-btn active" onclick="setCap(10000)">10 MW</button>
+            <button class="pill-btn" onclick="setCap(50000)">50 MW</button>
+            <button class="pill-btn" onclick="setCap(100000)">100 MW Campus</button>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <div class="input-header">
+            <label for="cDur">Average Job Duration</label>
+            <span id="cDurVal">8 Hours</span>
+          </div>
+          <input type="range" id="cDur" min="1" max="72" step="1" value="8">
+          <div class="preset-pills">
+            <button class="pill-btn" onclick="setDur(3)">3h Finetune</button>
+            <button class="pill-btn" onclick="setDur(4)">4h Inference</button>
+            <button class="pill-btn active" onclick="setDur(8)">8h Pretrain</button>
+            <button class="pill-btn" onclick="setDur(24)">24h Batch</button>
+            <button class="pill-btn" onclick="setDur(72)">72h Foundation</button>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <div class="input-header">
+            <label for="cFlex">Flexible Workload Share</label>
+            <span id="cFlexVal">20%</span>
+          </div>
+          <input type="range" id="cFlex" min="5" max="60" step="1" value="20">
+        </div>
+
+        <div class="input-group">
+          <div class="input-header">
+            <label for="cRate">Municipal Water Tariff ($ / 1,000 Gallons)</label>
+            <span id="cRateVal">$6.50</span>
+          </div>
+          <input type="range" id="cRate" min="2" max="18" step="0.25" value="6.5">
+        </div>
+      </section>
+
+      <section class="card results-panel">
+        <div>
+          <h3 style="margin:0;font:800 1.25rem var(--display);color:#6ee7b7;">Estimated Annual Environmental & Financial ROI</h3>
+          <p style="margin:4px 0 0;font-size:0.82rem;color:var(--muted);">Simulated using 1,016-day Ashburn climate models</p>
+        </div>
+
+        <div class="res-stat">
+          <span>Freshwater Saved Annually:</span>
+          <b id="resLiters" style="color:#7dd3fc;">3,613,580 L</b>
+        </div>
+
+        <div class="res-stat">
+          <span>Gallons Conserved:</span>
+          <b id="resGallons" style="color:#7dd3fc;">954,600 Gal</b>
+        </div>
+
+        <div class="res-stat">
+          <span>Olympic Swimming Pools:</span>
+          <b id="resPools" style="color:#34d399;">1.44 Pools</b>
+        </div>
+
+        <div class="res-stat">
+          <span>PJM Grid CO₂ Avoided:</span>
+          <b id="resCarbon" style="color:#c4b5fd;">419 Tons</b>
+        </div>
+
+        <div class="res-stat">
+          <span>Utility Water Bill Savings:</span>
+          <b id="resCost" style="color:#fcd34d;">$6,205 / yr</b>
+        </div>
+
+        <div class="res-stat">
+          <span>Loudoun Resident Showers:</span>
+          <b id="resShowers" style="color:#6ee7b7;">48,180 Showers</b>
+        </div>
+
+        <button class="btn-export" onclick="downloadConfig()">
+          <span>⚡ Export Kubernetes Eco-CronJob Plan (.YAML)</span>
+        </button>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+
+    function setCap(kw) {
+      $("cKw").value = kw;
+      recalc();
+    }
+    function setDur(h) {
+      $("cDur").value = h;
+      recalc();
+    }
+
+    function recalc() {
+      const kw = +$("cKw").value;
+      const dur = +$("cDur").value;
+      const flex = +$("cFlex").value / 100;
+      const rate = +$("cRate").value;
+
+      $("cKwVal").textContent = (kw >= 1000 ? (kw / 1000).toFixed(0) + " MW" : kw + " kW") + ` (${kw.toLocaleString()} kW)`;
+      $("cDurVal").textContent = dur + " Hours";
+      $("cFlexVal").textContent = Math.round(flex * 100) + "%";
+      $("cRateVal").textContent = "$" + rate.toFixed(2);
+
+      const annualFlexKwh = kw * flex * 8760;
+      const waterSavedLiters = annualFlexKwh * 0.412;
+      const gallons = waterSavedLiters * 0.264172;
+      const pools = waterSavedLiters / 2500000;
+      const co2Tons = (annualFlexKwh * 0.024) / 1000;
+      const cost = (gallons / 1000) * rate;
+      const showers = Math.round(waterSavedLiters / 75);
+
+      $("resLiters").textContent = Math.round(waterSavedLiters).toLocaleString() + " L";
+      $("resGallons").textContent = Math.round(gallons).toLocaleString() + " Gal";
+      $("resPools").textContent = (pools < 1 ? pools.toFixed(2) : pools.toFixed(1)) + " Pools";
+      $("resCarbon").textContent = Math.round(co2Tons).toLocaleString() + " Tons";
+      $("resCost").textContent = "$" + Math.round(cost).toLocaleString() + " / yr";
+      $("resShowers").textContent = showers.toLocaleString() + " Showers";
+    }
+
+    ["cKw", "cDur", "cFlex", "cRate"].forEach(id => $(id).oninput = recalc);
+
+    function downloadConfig() {
+      const kw = +$("cKw").value;
+      const dur = +$("cDur").value;
+      const yaml = `# Wetbulb AI Automated Eco-Dispatch Plan
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: eco-cluster-${kw}kw-dispatch
+  namespace: ai-workloads
+spec:
+  schedule: "0 2 * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          annotations:
+            wetbulb.org/cluster-kw: "${kw}"
+            wetbulb.org/duration-hours: "${dur}"
+            wetbulb.org/water-priority: "balanced"
+        spec:
+          containers:
+          - name: ai-runner
+            image: nvcr.io/nvidia/pytorch:24.08-py3
+            command: ["torchrun", "train.py"]
+          restartPolicy: OnFailure`;
+
+      const blob = new Blob([yaml], { type: "text/yaml" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `wetbulb-k8s-dispatch-${kw}kw.yaml`;
+      a.click();
+    }
+
+    document.querySelectorAll(".card").forEach(card => {
+      card.addEventListener("pointermove", e => {
+        const r = card.getBoundingClientRect();
+        const x = e.clientX - r.left, y = e.clientY - r.top;
+        const cx = r.width / 2, cy = r.height / 2;
+        const tiltX = (y - cy) / cy * -3;
+        const tiltY = (x - cx) / cx * 3;
+        card.style.transform = `perspective(1000px) rotateX(${tiltX.toFixed(2)}deg) rotateY(${tiltY.toFixed(2)}deg) translateZ(2px)`;
+      });
+      card.addEventListener("pointerleave", () => {
+        card.style.transform = "";
+      });
+    });
+
+    recalc();
+  </script>
+</body>
+</html>

@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wetbulb AI · Loudoun County Public Impact & Community Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #030712;
+  --panel: rgba(8, 15, 30, 0.75);
+  --line: rgba(148, 163, 214, 0.14);
+  --water: #38bdf8;
+  --eco: #34d399;
+  --carbon: #a78bfa;
+  --muted: #94a3b8;
+  --sans: "IBM Plex Sans", sans-serif;
+  --mono: "JetBrains Mono", monospace;
+  --display: "Outfit", sans-serif;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: #f8fafc;
+  font-family: var(--sans);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+.ambient {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 10%, rgba(56, 189, 248, 0.12), transparent 60%),
+              radial-gradient(circle at 80% 80%, rgba(52, 211, 153, 0.08), transparent 50%);
+  z-index: 0;
+}
+.wrap {
+  position: relative;
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 24px 20px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  z-index: 1;
+}
+
+/* Header & Nav */
+header.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.logo {
+  width: 42px;
+  height: 42px;
+}
+.brand h1 {
+  font: 800 1.6rem var(--display);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+.brand p {
+  margin: 2px 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.eco-tag {
+  font: 700 0.68rem var(--mono);
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(52, 211, 153, 0.18);
+  color: #6ee7b7;
+  border: 1px solid rgba(52, 211, 153, 0.35);
+}
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(6, 12, 28, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 5px 6px;
+  overflow-x: auto;
+  max-width: 100%;
+}
+.nav-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  color: var(--muted);
+  text-decoration: none;
+  font: 600 0.86rem var(--display);
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  white-space: nowrap;
+}
+.nav-tab:hover {
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.08);
+}
+.nav-tab.active {
+  color: #030712;
+  background: linear-gradient(135deg, #38bdf8, #34d399);
+  box-shadow: 0 4px 14px rgba(56, 189, 248, 0.4);
+  font-weight: 700;
+}
+
+/* Card */
+.card {
+  border-radius: 20px;
+  padding: 22px;
+  background: var(--panel);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--line);
+  box-shadow: 0 16px 40px -15px rgba(0, 0, 0, 0.7);
+  transform-style: preserve-3d;
+  transition: transform 0.15s ease, border-color 0.2s ease;
+}
+.card:hover {
+  border-color: rgba(56, 189, 248, 0.35);
+}
+
+/* Real-Time Live Ticker */
+.ticker-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 22px;
+  border-radius: 18px;
+  background: linear-gradient(90deg, rgba(6, 182, 212, 0.18), rgba(59, 130, 246, 0.14) 50%, rgba(16, 185, 129, 0.18));
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7);
+  flex-wrap: wrap;
+}
+.ticker-pulse {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 700 0.84rem var(--mono);
+  color: #38bdf8;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.pulse-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #38bdf8;
+  box-shadow: 0 0 12px #38bdf8;
+  animation: pulse-ring 1.8s infinite;
+}
+@keyframes pulse-ring {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 18px #34d399; }
+  100% { transform: scale(0.9); opacity: 0.8; }
+}
+.ticker-stats {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+.ticker-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+.ticker-item b {
+  font: 800 1.35rem var(--mono);
+  color: #f8fafc;
+}
+
+/* Scale View Toggle Bar */
+.scale-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.workload-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.btn-toggle {
+  font: 600 0.82rem var(--display);
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-toggle.active {
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+  border-color: #38bdf8;
+}
+
+/* 3D Flip Card Grid */
+.neal-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-top: 14px;
+}
+@media (max-width: 950px) {
+  .neal-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 620px) {
+  .neal-grid { grid-template-columns: 1fr; }
+}
+
+.flip-card {
+  background-color: transparent;
+  perspective: 1000px;
+  height: 205px;
+  cursor: pointer;
+}
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  text-align: left;
+  transition: transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-style: preserve-3d;
+}
+.flip-card:hover .flip-card-inner,
+.flip-card.flipped .flip-card-inner {
+  transform: rotateY(180deg);
+}
+.flip-front, .flip-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  border-radius: 18px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1px solid var(--line);
+  background: rgba(10, 18, 38, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+.flip-front {
+  border-left: 4px solid var(--accent, #38bdf8);
+}
+.flip-front .icon-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.flip-front .icon {
+  font-size: 2.2rem;
+  line-height: 1;
+}
+.flip-front .badge {
+  font: 700 0.68rem var(--mono);
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+}
+.flip-front .num {
+  font: 800 1.85rem/1 var(--display);
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  margin: 6px 0 2px;
+}
+.flip-front .desc {
+  font-size: 0.84rem;
+  color: var(--muted);
+  line-height: 1.35;
+}
+.flip-front .hint {
+  font-size: 0.72rem;
+  color: #38bdf8;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.flip-back {
+  transform: rotateY(180deg);
+  background: linear-gradient(145deg, #0f1f3d, #081122);
+  border-color: rgba(56, 189, 248, 0.4);
+  color: #e2e8f0;
+}
+.flip-back h4 {
+  font: 700 1rem var(--display);
+  margin: 0;
+  color: #7dd3fc;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.flip-back p {
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: #cbd5e1;
+  margin: 8px 0 0;
+}
+.flip-back .foot {
+  font: 700 0.7rem var(--mono);
+  color: #34d399;
+}
+
+/* Reservoir Interactive Mini-Game */
+.reservoir-card {
+  padding: 22px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(8, 20, 44, 0.9), rgba(12, 30, 60, 0.9));
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 24px;
+  align-items: center;
+}
+@media (max-width: 850px) {
+  .reservoir-card { grid-template-columns: 1fr; }
+}
+.reservoir-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.reservoir-tank-wrap {
+  position: relative;
+  height: 160px;
+  background: rgba(3, 7, 18, 0.65);
+  border: 2px solid rgba(56, 189, 248, 0.4);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.reservoir-water {
+  position: relative;
+  width: 100%;
+  height: 68%;
+  background: linear-gradient(180deg, #38bdf8 0%, #0284c7 50%, #0369a1 100%);
+  transition: height 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 -4px 20px rgba(56, 189, 248, 0.6);
+}
+.reservoir-water::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 0;
+  right: 0;
+  height: 10px;
+  background: #7dd3fc;
+  border-radius: 50%;
+  opacity: 0.8;
+}
+.reservoir-label {
+  position: absolute;
+  top: 12px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: space-between;
+  font: 700 0.82rem var(--mono);
+  color: #bae6fd;
+  z-index: 2;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+}
+.btn-game {
+  font: 700 0.86rem var(--display);
+  padding: 10px 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.2), rgba(14, 165, 233, 0.35));
+  color: #f8fafc;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-game:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(56, 189, 248, 0.4);
+  border-color: #38bdf8;
+}
+.btn-game:active {
+  transform: translateY(1px);
+}
+.hotspot-pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.hotspot-pill {
+  font: 600 0.78rem var(--display);
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.hotspot-pill.active, .hotspot-pill:hover {
+  border-color: #38bdf8;
+  color: #ffffff;
+  background: rgba(56, 189, 248, 0.15);
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  z-index: 50;
+  transform: translate(-50%, 20px);
+  padding: 12px 20px;
+  border-radius: 14px;
+  background: rgba(6, 12, 26, 0.95);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(56, 189, 248, 0.3);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+</style>
+</head>
+<body>
+<div class="ambient"></div>
+<div class="toast" id="toast"><span id="toastIcon">✨</span><span id="toastText"></span></div>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 42 42">
+        <defs>
+          <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#6ee7b7"/>
+            <stop offset="40%" stop-color="#38bdf8"/>
+            <stop offset="100%" stop-color="#818cf8"/>
+          </linearGradient>
+        </defs>
+        <ellipse cx="21" cy="36" rx="12" ry="3" fill="none" stroke="#38bdf8" stroke-width="1.3"/>
+        <path d="M21 3C17 10 10 16 10 23a11 11 0 0 0 22 0C32 16 25 10 21 3z" fill="url(#lg)"/>
+      </svg>
+      <div>
+        <h1>Wetbulb AI</h1>
+        <p>Virginia Data Center Alley · Public Impact Experience <span class="eco-tag">🎮 NEAL.FUN MODE</span></p>
+      </div>
+    </div>
+  </header>
+
+  <!-- Multi-Page Site Navigation -->
+  <nav class="site-nav" aria-label="Main Site Navigation">
+    <a href="index.html" class="nav-tab">⚡ Live Dispatcher</a>
+    <a href="impact.html" class="nav-tab active">🎮 Public Impact (Neal.fun)</a>
+    <a href="backtest.html" class="nav-tab">📊 1,016-Day Evidence</a>
+    <a href="calculator.html" class="nav-tab">🧮 What-If ROI Calculator</a>
+    <a href="methodology.html" class="nav-tab">📖 Methodology</a>
+  </nav>
+
+  <!-- Real-Time Evaporation Clock -->
+  <div class="ticker-banner">
+    <div class="ticker-pulse">
+      <span class="pulse-dot"></span>
+      <span>Real-Time Ashburn Evaporation Clock</span>
+    </div>
+    <div class="ticker-stats">
+      <div class="ticker-item">
+        <span>Standard Cooling Towers:</span>
+        <b id="liveSecLiters">0 L</b>
+        <span style="font-size:0.75rem;">evaporated</span>
+      </div>
+      <div class="ticker-item">
+        <span style="color:#34d399;">Wetbulb Saves:</span>
+        <b id="liveSecSaved" style="color:#34d399;">0 L</b>
+        <span style="font-size:0.75rem;">retained</span>
+      </div>
+      <div class="ticker-item">
+        <span>Elapsed:</span>
+        <b id="liveTickerSec">0s</b>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scale View Controls & Metrics -->
+  <section class="card">
+    <div class="scale-header">
+      <div>
+        <h2 style="margin:0;font:800 1.4rem var(--display);">Hyperscale Environmental Scale Simulator</h2>
+        <p style="margin:4px 0 0;color:var(--muted);font-size:0.88rem;" id="scaleSubtitle">
+          Scaled to Northern Virginia's 4.0 GW Data Center Alley with 15% flexible AI capacity
+        </p>
+      </div>
+      <div class="workload-group">
+        <span style="font:700 0.8rem var(--mono);color:var(--muted);">SCALE VIEW:</span>
+        <button class="btn-toggle" id="btnScaleSingle">Single AI Job</button>
+        <button class="btn-toggle" id="btnScaleCampus">100 MW Campus</button>
+        <button class="btn-toggle active" id="btnScaleVA">4.0 GW Virginia Alley</button>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:18px;">
+      <div style="background:rgba(0,0,0,0.3);padding:14px;border-radius:14px;border:1px solid var(--line);">
+        <b class="num" id="simWaterLiters" style="display:block;font:800 1.8rem var(--display);color:#7dd3fc;">722,716,170 L</b>
+        <span style="color:var(--muted);font-size:0.8rem;">On-site cooling water saved / year</span>
+      </div>
+      <div style="background:rgba(0,0,0,0.3);padding:14px;border-radius:14px;border:1px solid var(--line);">
+        <b class="num" id="simPools" style="display:block;font:800 1.8rem var(--display);color:#34d399;">289 Pools</b>
+        <span style="color:var(--muted);font-size:0.8rem;">Olympic swimming pools conserved</span>
+      </div>
+      <div style="background:rgba(0,0,0,0.3);padding:14px;border-radius:14px;border:1px solid var(--line);">
+        <b class="num" id="simCarbon" style="display:block;font:800 1.8rem var(--display);color:#c4b5fd;">83,878 Tons</b>
+        <span style="color:var(--muted);font-size:0.8rem;">Metric tons CO₂ eliminated</span>
+      </div>
+      <div style="background:rgba(0,0,0,0.3);padding:14px;border-radius:14px;border:1px solid var(--line);">
+        <b class="num" id="simCars" style="display:block;font:800 1.8rem var(--display);color:#fcd34d;">208M Miles</b>
+        <span style="color:var(--muted);font-size:0.8rem;">Gasoline vehicle miles avoided</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Neal.fun 3D Flip Card Experience -->
+  <section class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;">
+      <div>
+        <h2 style="margin:0;font:800 1.4rem var(--display);">What 722 Million Liters Means in the Real World</h2>
+        <span style="font-size:0.86rem;color:var(--muted);">Click any card to flip and explore tangible Virginia citizen impacts</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;background:rgba(0,0,0,0.3);padding:8px 14px;border-radius:12px;border:1px solid var(--line);">
+        <span style="font:700 0.78rem var(--mono);color:var(--muted);">FLEXIBLE WORKLOAD:</span>
+        <b id="flexPctVal" style="color:#38bdf8;font:800 1.1rem var(--mono);min-width:40px;">15%</b>
+        <input type="range" id="flexSlider" min="5" max="50" step="1" value="15" style="width:130px;accent-color:#38bdf8;">
+      </div>
+    </div>
+
+    <div class="neal-grid">
+      <!-- Card 1 -->
+      <div class="flip-card" onclick="this.classList.toggle('flipped')">
+        <div class="flip-card-inner">
+          <div class="flip-front" style="--accent:#38bdf8;">
+            <div class="icon-row"><span class="icon">🏊</span><span class="badge">FRESHWATER</span></div>
+            <div>
+              <b class="num" id="impPools">289 Pools</b>
+              <div class="desc">Olympic swimming pools of pure freshwater saved annually</div>
+            </div>
+            <span class="hint">Click to flip details ↻</span>
+          </div>
+          <div class="flip-back">
+            <h4>🏊 Olympic Scale Comparison</h4>
+            <p>An Olympic swimming pool holds 2.5 million liters (660,000 gallons). 289 pools laid end-to-end span 14.5 kilometers — stretching from Dulles Airport past Tysons Corner.</p>
+            <span class="foot">Virginia Hyperscale Fleet</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="flip-card" onclick="this.classList.toggle('flipped')">
+        <div class="flip-card-inner">
+          <div class="flip-front" style="--accent:#34d399;">
+            <div class="icon-row"><span class="icon">🚿</span><span class="badge">CITIZEN USE</span></div>
+            <div>
+              <b class="num" id="impShowers">9.6M Showers</b>
+              <div class="desc">Standard 8-minute hot showers conserved for local families</div>
+            </div>
+            <span class="hint">Click to flip details ↻</span>
+          </div>
+          <div class="flip-back">
+            <h4>🚿 Loudoun County Showers</h4>
+            <p>A standard shower head consumes ~75 liters. This savings covers daily showers for all 430,000 Loudoun County residents for 74 continuous days during summer drought season.</p>
+            <span class="foot">EPA WaterSense Metric</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="flip-card" onclick="this.classList.toggle('flipped')">
+        <div class="flip-card-inner">
+          <div class="flip-front" style="--accent:#0284c7;">
+            <div class="icon-row"><span class="icon">🚰</span><span class="badge">POTABLE TAP</span></div>
+            <div>
+              <b class="num" id="impResidents">142,000 People</b>
+              <div class="desc">Annual municipal drinking water supply protected in Loudoun</div>
+            </div>
+            <span class="hint">Click to flip details ↻</span>
+          </div>
+          <div class="flip-back">
+            <h4>🚰 Potomac & Goose Creek</h4>
+            <p>Data centers draw from the same municipal reservoirs that supply drinking water. Wetbulb eliminates evaporation spikes during low-flow Potomac drought advisories.</p>
+            <span class="foot">Loudoun Water Authority</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="flip-card" onclick="this.classList.toggle('flipped')">
+        <div class="flip-card-inner">
+          <div class="flip-front" style="--accent:#a78bfa;">
+            <div class="icon-row"><span class="icon">🥤</span><span class="badge">BOTTLED UNITS</span></div>
+            <div>
+              <b class="num" id="impBottles">1.44B Bottles</b>
+              <div class="desc">Standard 500ml water bottles preserved from evaporation</div>
+            </div>
+            <span class="hint">Click to flip details ↻</span>
+          </div>
+          <div class="flip-back">
+            <h4>🥤 3.7x to the Moon</h4>
+            <p>1.44 billion 500ml water bottles stacked end-to-end reach 289,000 kilometers into the sky — more than 75% of the distance from the Earth all the way to the Moon!</p>
+            <span class="foot">Neal.fun Space Scale</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 5 -->
+      <div class="flip-card" onclick="this.classList.toggle('flipped')">
+        <div class="flip-card-inner">
+          <div class="flip-front" style="--accent:#10b981;">
+            <div class="icon-row"><span class="icon">🌲</span><span class="badge">FOREST SINK</span></div>
+            <div>
+              <b class="num" id="impTrees">3.81M Trees</b>
+              <div class="desc">Carbon sequestration equivalent of mature Virginia pine trees</div>
+            </div>
+            <span class="hint">Click to flip details ↻</span>
+          </div>
+          <div class="flip-back">
+            <h4>🌲 Virginia Loblolly Pine Forest</h4>
+            <p>Eliminating 83,878 metric tons of CO₂ from PJM's peaker plants has the exact same climate cooling impact as planting 19,000 acres of dense Appalachian forest.</p>
+            <span class="foot">USFS Carbon Sequestration</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 6 -->
+      <div class="flip-card" onclick="this.classList.toggle('flipped')">
+        <div class="flip-card-inner">
+          <div class="flip-front" style="--accent:#f59e0b;">
+            <div class="icon-row"><span class="icon">🚗</span><span class="badge">HIGHWAY MILES</span></div>
+            <div>
+              <b class="num" id="impCars">18,200 Cars</b>
+              <div class="desc">Gasoline passenger vehicles removed from Virginia roads</div>
+            </div>
+            <span class="hint">Click to flip details ↻</span>
+          </div>
+          <div class="flip-back">
+            <h4>🚗 Route 28 & Dulles Commute</h4>
+            <p>Avoiding 208 million passenger vehicle miles of exhaust each year equals permanently taking 18,200 gas cars off the congested Dulles Greenway and Route 28 corridors.</p>
+            <span class="foot">EPA Greenhouse Equivalency</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Reservoir Mini-Game -->
+  <section class="reservoir-card">
+    <div class="reservoir-controls">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:1.6rem;">🏊</span>
+        <h3 style="margin:0;font:800 1.25rem var(--display);">Goose Creek Reservoir Community Game</h3>
+      </div>
+      <p style="margin:0;font-size:0.86rem;color:var(--muted);line-height:1.45;">
+        Every flexible batch job scheduled during night economizer windows acts like pouring fresh water directly back into the community reservoir.
+      </p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;">
+        <button class="btn-game" id="btnPourWater">💧 Pour 10,000 L to Reservoir</button>
+        <button class="btn-game" id="btnResetReservoir" style="background:rgba(255,255,255,0.08);border-color:var(--line);">↺ Reset</button>
+      </div>
+      <div class="hotspot-pills">
+        <span class="hotspot-pill active" data-spot="ashburn">📍 Ashburn Alley (4.0 GW)</span>
+        <span class="hotspot-pill" data-spot="potomac">📍 Potomac Intake</span>
+        <span class="hotspot-pill" data-spot="goose">📍 Goose Creek Dam</span>
+        <span class="hotspot-pill" data-spot="peaker">📍 Possum Point Peaker</span>
+      </div>
+    </div>
+
+    <div class="reservoir-tank-wrap">
+      <div class="reservoir-label">
+        <span id="reservoirStatus">Reservoir Level: 68% (Safe Buffer)</span>
+        <span id="reservoirVolume">+0 Liters Poured</span>
+      </div>
+      <div class="reservoir-water" id="reservoirWater"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+let scaleMode = "va";
+let flexPct = 15;
+
+function toast(m, icon = "✨") {
+  const t = $("toast");
+  $("toastText").textContent = m;
+  $("toastIcon").textContent = icon;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2800);
+}
+
+function updateScale() {
+  let totalSavedL, pools, co2Tons, carMiles, desc;
+  if (scaleMode === "single") {
+    totalSavedL = 2840;
+    pools = 0.0011;
+    co2Tons = 0.326;
+    carMiles = 810;
+    desc = "Scaled to 1 single batch AI workload (4 hours @ 500 kW)";
+  } else if (scaleMode === "campus") {
+    const ratio = (100 / 4000) * (flexPct / 15);
+    totalSavedL = 722716170 * ratio; // 18,067,904 L
+    pools = totalSavedL / 2500000;
+    co2Tons = 83878 * ratio;
+    carMiles = 208000000 * ratio;
+    desc = `Scaled to a standard 100 MW Ashburn Campus with ${flexPct}% flexible AI workloads (~${(100 * flexPct / 100).toFixed(1)} MW flexible)`;
+  } else {
+    const ratio = (flexPct / 15);
+    totalSavedL = 722716170 * ratio; // 722,716,170 L
+    pools = totalSavedL / 2500000;
+    co2Tons = 83878 * ratio;
+    carMiles = 208000000 * ratio;
+    desc = `Scaled to Northern Virginia's 4.0 GW Data Center Alley with ${flexPct}% flexible workloads (~${Math.round(4000 * flexPct / 100)} MW flexible)`;
+  }
+
+  $("scaleSubtitle").textContent = desc;
+  $("simWaterLiters").textContent = Math.round(totalSavedL).toLocaleString() + " L";
+  $("simPools").textContent = (pools < 1 ? pools.toFixed(3) : (pools < 10 ? pools.toFixed(1) : Math.round(pools).toLocaleString())) + " Pools";
+  $("simCarbon").textContent = (co2Tons < 1 ? (co2Tons * 1000).toFixed(0) + " kg" : Math.round(co2Tons).toLocaleString() + " Tons");
+  $("simCars").textContent = (carMiles >= 1e6 ? (carMiles / 1e6).toFixed(1) + "M Miles" : Math.round(carMiles).toLocaleString() + " Miles");
+
+  // Public Impact Conversions
+  const showers = Math.round(totalSavedL / 75);
+  const peopleWater = Math.max(0.1, totalSavedL / 138000);
+  const bottles = Math.round(totalSavedL / 0.5);
+  const trees = Math.round(co2Tons / 0.022);
+  const cars = Math.round(co2Tons / 4.6);
+  const poolCount = pools < 1 ? pools.toFixed(3) : (pools < 10 ? pools.toFixed(1) : Math.round(pools).toLocaleString());
+
+  $("impPools").textContent = poolCount + " Pools";
+  $("impShowers").textContent = showers >= 1e6 ? (showers / 1e6).toFixed(1) + "M Showers" : showers.toLocaleString() + " Showers";
+  $("impResidents").textContent = (totalSavedL >= 1e6 ? Math.round(totalSavedL / 138000).toLocaleString() : peopleWater.toFixed(1)) + " People";
+  $("impBottles").textContent = bottles >= 1e9 ? (bottles / 1e9).toFixed(2) + "B Bottles" : (bottles >= 1e6 ? (bottles / 1e6).toFixed(0) + "M Bottles" : bottles.toLocaleString() + " Bottles");
+  $("impTrees").textContent = trees >= 1e6 ? (trees / 1e6).toFixed(2) + "M Trees" : trees.toLocaleString() + " Trees";
+  $("impCars").textContent = cars.toLocaleString() + " Cars";
+}
+
+$("btnScaleSingle").onclick = () => { scaleMode = "single"; toggleScale("btnScaleSingle"); updateScale(); };
+$("btnScaleCampus").onclick = () => { scaleMode = "campus"; toggleScale("btnScaleCampus"); updateScale(); };
+$("btnScaleVA").onclick = () => { scaleMode = "va"; toggleScale("btnScaleVA"); updateScale(); };
+
+function toggleScale(id) {
+  ["btnScaleSingle", "btnScaleCampus", "btnScaleVA"].forEach(b => $(b).classList.toggle("active", b === id));
+}
+
+$("flexSlider").oninput = e => {
+  flexPct = +e.target.value;
+  $("flexPctVal").textContent = flexPct + "%";
+  updateScale();
+};
+
+// Real-Time Ticker
+const t0 = performance.now();
+setInterval(() => {
+  const el = (performance.now() - t0) / 1000;
+  $("liveSecLiters").textContent = Math.round(el * 22.9).toLocaleString() + " L";
+  $("liveSecSaved").textContent = Math.round(el * 5.62).toLocaleString() + " L";
+  $("liveTickerSec").textContent = Math.floor(el) + "s";
+}, 200);
+
+// Reservoir Game
+let pouredLiters = 0;
+$("btnPourWater").onclick = () => {
+  pouredLiters += 10000;
+  const h = Math.min(95, 68 + (pouredLiters / 10000) * 4);
+  $("reservoirWater").style.height = h + "%";
+  $("reservoirVolume").textContent = `+${pouredLiters.toLocaleString()} L Poured`;
+  $("reservoirStatus").textContent = `Reservoir Level: ${Math.round(h)}% (${h > 85 ? 'Plentiful Buffer 🌊' : 'Safe Buffer'})`;
+  toast(`💧 Added 10,000 Liters to Goose Creek Reservoir! (+${pouredLiters.toLocaleString()} L total)`);
+};
+
+$("btnResetReservoir").onclick = () => {
+  pouredLiters = 0;
+  $("reservoirWater").style.height = "68%";
+  $("reservoirVolume").textContent = "+0 Liters Poured";
+  $("reservoirStatus").textContent = "Reservoir Level: 68% (Safe Buffer)";
+  toast("Reservoir buffer reset to baseline.");
+};
+
+// Hotspot pills
+document.querySelectorAll(".hotspot-pill").forEach(p => {
+  p.onclick = () => {
+    document.querySelectorAll(".hotspot-pill").forEach(x => x.classList.remove("active"));
+    p.classList.add("active");
+    const msgs = {
+      ashburn: "Ashburn Data Center Alley: 4.0 GW capacity consuming up to 15% of summer municipal water during peak heat.",
+      potomac: "Potomac River Intake: Primary drinking water source for 5 million DC metro & Northern Virginia residents.",
+      goose: "Goose Creek Reservoir: Loudoun Water's critical summer drought storage facility holding ~1 billion gallons.",
+      peaker: "Possum Point Peaker: High-carbon natural gas turbine fired during peak PJM heatwave hours."
+    };
+    toast(msgs[p.dataset.spot] || p.textContent);
+  };
+});
+
+// 3D Card Tilt Mouse Interaction
+document.querySelectorAll(".card").forEach(card => {
+  card.addEventListener("pointermove", e => {
+    const r = card.getBoundingClientRect();
+    const x = e.clientX - r.left, y = e.clientY - r.top;
+    const cx = r.width / 2, cy = r.height / 2;
+    const tiltX = (y - cy) / cy * -3.5;
+    const tiltY = (x - cx) / cx * 3.5;
+    card.style.transform = `perspective(1000px) rotateX(${tiltX.toFixed(2)}deg) rotateY(${tiltY.toFixed(2)}deg) translateZ(2px)`;
+  });
+  card.addEventListener("pointerleave", () => {
+    card.style.transform = "";
+  });
+});
+
+updateScale();
+</script>
+</body>
+</html>

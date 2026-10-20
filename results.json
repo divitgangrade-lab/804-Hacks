@@ -1,0 +1,247 @@
+{
+ "data": {
+  "grid": "EIA-930 via Kaggle (kaitoland), PJM",
+  "weather": "Open-Meteo archive (ERA5), Ashburn VA",
+  "start": "2024-01-01",
+  "end": "2026-10-16",
+  "hours": 24474,
+  "days_backtested": 1016
+ },
+ "averages": {
+  "carbon_g_per_kwh": 461.0,
+  "water_l_per_kwh": 2.73,
+  "cooling_l_per_kwh": 0.67,
+  "grid_water_l_per_kwh": 2.06,
+  "max_wetbulb_c": 26.9
+ },
+ "story": {
+  "verdict": "CONFLICT",
+  "within_day_corr": 0.21,
+  "conflict_share_pct": 66.0,
+  "cleanest_hour": 13,
+  "dirtiest_hour": 21,
+  "least_thirsty_hour": 7,
+  "thirstiest_hour": 15
+ },
+ "job": {
+  "hours": 4,
+  "kw": 500,
+  "submit_hour": 9
+ },
+ "backtest": [
+  {
+   "policy": "Run now",
+   "kg_co2": 898.1,
+   "liters": 5446.0,
+   "onsite_liters": 1408.0,
+   "co2_saved_pct": 0.0,
+   "water_saved_pct": 0.0,
+   "onsite_saved_pct": 0.0
+  },
+  {
+   "policy": "Carbon only",
+   "kg_co2": 880.6,
+   "liters": 5439.0,
+   "onsite_liters": 1365.0,
+   "co2_saved_pct": 1.9,
+   "water_saved_pct": 0.1,
+   "onsite_saved_pct": 3.0
+  },
+  {
+   "policy": "Water only",
+   "kg_co2": 905.5,
+   "liters": 5142.0,
+   "onsite_liters": 1022.0,
+   "co2_saved_pct": -0.8,
+   "water_saved_pct": 5.6,
+   "onsite_saved_pct": 27.4
+  },
+  {
+   "policy": "Wetbulb",
+   "kg_co2": 888.0,
+   "liters": 5188.0,
+   "onsite_liters": 1066.0,
+   "co2_saved_pct": 1.1,
+   "water_saved_pct": 4.7,
+   "onsite_saved_pct": 24.3
+  }
+ ],
+ "backtest_summer": [
+  {
+   "policy": "Run now",
+   "kg_co2": 943.4,
+   "liters": 7279.0,
+   "onsite_liters": 3263.0,
+   "co2_saved_pct": 0.0,
+   "water_saved_pct": 0.0,
+   "onsite_saved_pct": 0.0
+  },
+  {
+   "policy": "Carbon only",
+   "kg_co2": 935.3,
+   "liters": 7153.0,
+   "onsite_liters": 3084.0,
+   "co2_saved_pct": 0.9,
+   "water_saved_pct": 1.7,
+   "onsite_saved_pct": 5.5
+  },
+  {
+   "policy": "Water only",
+   "kg_co2": 961.4,
+   "liters": 6812.0,
+   "onsite_liters": 2633.0,
+   "co2_saved_pct": -1.9,
+   "water_saved_pct": 6.4,
+   "onsite_saved_pct": 19.3
+  },
+  {
+   "policy": "Wetbulb",
+   "kg_co2": 944.8,
+   "liters": 6863.0,
+   "onsite_liters": 2690.0,
+   "co2_saved_pct": -0.1,
+   "water_saved_pct": 5.7,
+   "onsite_saved_pct": 17.6
+  }
+ ],
+ "tradeoff": [
+  {
+   "w_carbon": 0.0,
+   "co2_saved_pct": -0.8,
+   "water_saved_pct": 5.6
+  },
+  {
+   "w_carbon": 0.1,
+   "co2_saved_pct": -0.4,
+   "water_saved_pct": 5.5
+  },
+  {
+   "w_carbon": 0.2,
+   "co2_saved_pct": 0.0,
+   "water_saved_pct": 5.5
+  },
+  {
+   "w_carbon": 0.3,
+   "co2_saved_pct": 0.4,
+   "water_saved_pct": 5.4
+  },
+  {
+   "w_carbon": 0.4,
+   "co2_saved_pct": 0.8,
+   "water_saved_pct": 5.1
+  },
+  {
+   "w_carbon": 0.5,
+   "co2_saved_pct": 1.1,
+   "water_saved_pct": 4.7
+  },
+  {
+   "w_carbon": 0.6,
+   "co2_saved_pct": 1.4,
+   "water_saved_pct": 4.2
+  },
+  {
+   "w_carbon": 0.7,
+   "co2_saved_pct": 1.6,
+   "water_saved_pct": 3.5
+  },
+  {
+   "w_carbon": 0.8,
+   "co2_saved_pct": 1.8,
+   "water_saved_pct": 2.5
+  },
+  {
+   "w_carbon": 0.9,
+   "co2_saved_pct": 1.9,
+   "water_saved_pct": 1.1
+  },
+  {
+   "w_carbon": 1.0,
+   "co2_saved_pct": 1.9,
+   "water_saved_pct": 0.1
+  }
+ ],
+ "scale_up": {
+  "assumptions": "4.0 GW average Virginia data center load, 15% flexible, savings averaged over submit times every 3 h",
+  "flexible_kwh_per_year": 5256000000.0,
+  "co2_tons_per_year": 83878.0,
+  "water_liters_per_year": 726952275.0,
+  "olympic_pools_per_year": 291.0,
+  "onsite_water_liters_per_year": 722716170.0,
+  "onsite_water_gallons_per_year": 190942185.0,
+  "onsite_olympic_pools_per_year": 289.0,
+  "onsite_saved_pct_all_hours": 20.6,
+  "co2_saved_pct_all_hours": 3.5,
+  "water_saved_pct_all_hours": 5.1
+ },
+ "replay_days": [
+  {
+   "id": "best_summer",
+   "title": "The summer day where waiting saved the most water",
+   "label": "June 30, 2024",
+   "kg": {
+    "Run now": 1029.9,
+    "Carbon only": 905.9,
+    "Water only": 906.6,
+    "Wetbulb": 905.9
+   },
+   "liters": {
+    "Run now": 8988.0,
+    "Carbon only": 5298.0,
+    "Water only": 5254.0,
+    "Wetbulb": 5298.0
+   }
+  },
+  {
+   "id": "humid_summer",
+   "title": "The most humid summer day",
+   "label": "July 2, 2026",
+   "kg": {
+    "Run now": 1062.3,
+    "Carbon only": 1062.3,
+    "Water only": 1067.7,
+    "Wetbulb": 1067.8
+   },
+   "liters": {
+    "Run now": 8683.0,
+    "Carbon only": 8683.0,
+    "Water only": 8350.0,
+    "Wetbulb": 8412.0
+   }
+  },
+  {
+   "id": "cold_winter",
+   "title": "The coldest winter day",
+   "label": "January 22, 2025",
+   "kg": {
+    "Run now": 1144.8,
+    "Carbon only": 1086.7,
+    "Water only": 1144.8,
+    "Wetbulb": 1086.7
+   },
+   "liters": {
+    "Run now": 4200.0,
+    "Carbon only": 4133.0,
+    "Water only": 4200.0,
+    "Wetbulb": 4133.0
+   }
+  },
+  {
+   "id": "conflict",
+   "title": "The day carbon and water disagreed most",
+   "label": "July 3, 2026",
+   "kg": {
+    "Run now": 1041.2,
+    "Carbon only": 1041.2,
+    "Water only": 1033.4,
+    "Wetbulb": 1033.4
+   },
+   "liters": {
+    "Run now": 8729.0,
+    "Carbon only": 8729.0,
+    "Water only": 8263.0,
+    "Wetbulb": 8263.0
+   }
+  }
+ ]
+}
