@@ -7,6 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="theme.css">
+  <script src="theme.js"></script>
   <style>
     :root {
       --bg: #030712;
@@ -295,11 +297,11 @@
           </div>
           <input type="range" id="cKw" min="100" max="100000" step="100" value="10000">
           <div class="preset-pills">
-            <button class="pill-btn" onclick="setCap(500)">500 kW</button>
-            <button class="pill-btn" onclick="setCap(2000)">2 MW</button>
-            <button class="pill-btn active" onclick="setCap(10000)">10 MW</button>
-            <button class="pill-btn" onclick="setCap(50000)">50 MW</button>
-            <button class="pill-btn" onclick="setCap(100000)">100 MW Campus</button>
+            <button class="pill-btn" data-cap="500" onclick="setCap(500)">500 kW</button>
+            <button class="pill-btn" data-cap="2000" onclick="setCap(2000)">2 MW</button>
+            <button class="pill-btn active" data-cap="10000" onclick="setCap(10000)">10 MW</button>
+            <button class="pill-btn" data-cap="50000" onclick="setCap(50000)">50 MW</button>
+            <button class="pill-btn" data-cap="100000" onclick="setCap(100000)">100 MW Campus</button>
           </div>
         </div>
 
@@ -310,11 +312,11 @@
           </div>
           <input type="range" id="cDur" min="1" max="72" step="1" value="8">
           <div class="preset-pills">
-            <button class="pill-btn" onclick="setDur(3)">3h Finetune</button>
-            <button class="pill-btn" onclick="setDur(4)">4h Inference</button>
-            <button class="pill-btn active" onclick="setDur(8)">8h Pretrain</button>
-            <button class="pill-btn" onclick="setDur(24)">24h Batch</button>
-            <button class="pill-btn" onclick="setDur(72)">72h Foundation</button>
+            <button class="pill-btn" data-duration="3" onclick="setDur(3)">3h Finetune</button>
+            <button class="pill-btn" data-duration="4" onclick="setDur(4)">4h Inference</button>
+            <button class="pill-btn active" data-duration="8" onclick="setDur(8)">8h Pretrain</button>
+            <button class="pill-btn" data-duration="24" onclick="setDur(24)">24h Batch</button>
+            <button class="pill-btn" data-duration="72" onclick="setDur(72)">72h Foundation</button>
           </div>
         </div>
 
@@ -383,10 +385,12 @@
 
     function setCap(kw) {
       $("cKw").value = kw;
+      document.querySelectorAll("[data-cap]").forEach(button => button.classList.toggle("active", +button.dataset.cap === kw));
       recalc();
     }
     function setDur(h) {
       $("cDur").value = h;
+      document.querySelectorAll("[data-duration]").forEach(button => button.classList.toggle("active", +button.dataset.duration === h));
       recalc();
     }
 
@@ -417,7 +421,15 @@
       $("resShowers").textContent = showers.toLocaleString() + " Showers";
     }
 
-    ["cKw", "cDur", "cFlex", "cRate"].forEach(id => $(id).oninput = recalc);
+    $("cKw").oninput = () => {
+      document.querySelectorAll("[data-cap]").forEach(button => button.classList.toggle("active", +button.dataset.cap === +$("cKw").value));
+      recalc();
+    };
+    $("cDur").oninput = () => {
+      document.querySelectorAll("[data-duration]").forEach(button => button.classList.toggle("active", +button.dataset.duration === +$("cDur").value));
+      recalc();
+    };
+    ["cFlex", "cRate"].forEach(id => $(id).oninput = recalc);
 
     function downloadConfig() {
       const kw = +$("cKw").value;

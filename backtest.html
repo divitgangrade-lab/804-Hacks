@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<script src="theme.js"></script>
 <style>
 :root {
   --bg: #030712;
@@ -341,7 +343,7 @@ header.top {
         <div class="race-lane wb">
           <div style="display:flex;justify-content:space-between;align-items:center;">
             <b style="font:700 0.95rem var(--display);color:#6ee7b7;">With Wetbulb Climate AI Dispatch</b>
-            <span style="font:700 0.72rem var(--mono);color:#34d399;" id="wSavedPct">−41.1% WATER</span>
+            <span style="font:700 0.72rem var(--mono);color:#34d399;" id="wSavedPct">41.1% WATER SAVED</span>
           </div>
           <div style="display:flex;gap:20px;font-size:0.88rem;">
             <div><b id="wLiters" style="font:800 1.25rem var(--mono);color:#6ee7b7;">5,298 L</b> <span style="color:var(--muted);">cooling water</span></div>
@@ -389,7 +391,7 @@ function initCharts() {
 
     h += `<g class="hbar-group" style="cursor:pointer;" data-p="${p}">
       <text x="10" y="${y + 14}" fill="#f1f5f9" font-size="12.5" font-weight="${isWb ? '700' : '500'}" ${sans}>${p}</text>
-      ${isWb ? `<rect x="74" y="${y + 2}" width="54" height="15" rx="4" fill="rgba(52,211,153,0.18)" stroke="rgba(52,211,153,0.4)"/><text x="101" y="${y + 13}" text-anchor="middle" fill="#34d399" font-size="9" font-weight="700" ${mono}>−24.3%</text>` : ''}
+      ${isWb ? `<rect x="74" y="${y + 2}" width="54" height="15" rx="4" fill="rgba(52,211,153,0.18)" stroke="rgba(52,211,153,0.4)"/><text x="101" y="${y + 13}" text-anchor="middle" fill="#34d399" font-size="9" font-weight="700" ${mono}>24.3%</text>` : ''}
       <rect x="${barX}" y="${y}" width="${w}" height="19" rx="9.5" fill="url(#bgR${i})" opacity="${isWb ? 1 : 0.85}"/>
       <text x="${barX - 8}" y="${y + 14}" fill="${col[i]}" font-size="12" font-weight="700" text-anchor="end" ${mono}>${Math.round(bt[p].onsite_liters).toLocaleString()} L</text>
     </g>`;
@@ -461,8 +463,8 @@ document.querySelectorAll(".day-btn").forEach((btn, idx) => {
     $("nKg").textContent = d.nKg.toLocaleString() + " kg";
     $("wLiters").textContent = d.wL.toLocaleString() + " L";
     $("wKg").textContent = d.wKg.toLocaleString() + " kg";
-    const pct = ((d.nL - d.wL) / d.nL * 100).toFixed(1);
-    $("wSavedPct").textContent = `−${pct}% WATER`;
+    const pct = Math.abs((d.nL - d.wL) / d.nL * 100).toFixed(1);
+    $("wSavedPct").textContent = d.wL <= d.nL ? `${pct}% WATER SAVED` : `${pct}% MORE WATER`;
     $("wBar").style.width = (d.wL / d.nL * 100) + "%";
   };
 });

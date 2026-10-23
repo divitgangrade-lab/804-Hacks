@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="theme.css">
+<script src="theme.js"></script>
 <script src="data.js"></script>
 <style>
 /* =====================================================================
@@ -519,6 +521,12 @@ button { cursor: pointer; border: none; background: none; }
 .demo-box { display: none; flex-direction: column; gap: 8px; border-top: 1px dashed var(--line); padding-top: 12px; }
 .demo-box.show { display: flex; }
 .demo-box label { display: flex; justify-content: space-between; font-size: 0.82rem; color: var(--muted); }
+.sim-caption { color: var(--muted); font-size: 0.76rem; line-height: 1.4; }
+.fan-modes { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
+.fan-mode-btn { min-height: 34px; padding: 5px 3px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel-2); color: var(--muted); font: 700 0.65rem var(--mono); text-transform: uppercase; }
+.fan-mode-btn.active { color: var(--ink); border-color: var(--water); background: rgba(56, 189, 248, 0.16); }
+.fan-mode-btn:focus-visible { outline: 2px solid var(--water); outline-offset: 2px; }
+@media (max-width: 420px) { .fan-modes { grid-template-columns: repeat(3, 1fr); } }
 
 /* Timeline Chart & Environmental Visualization */
 .chart-header-row {
@@ -1299,6 +1307,12 @@ input[type=range].plain::-moz-range-thumb {
   color: #ffffff;
   background: rgba(56, 189, 248, 0.15);
 }
+.hotspot-pill.active { box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15); }
+.game-day-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.game-stat { min-width: 0; padding: 9px 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel-2); }
+.game-stat b { display: block; overflow: hidden; text-overflow: ellipsis; font: 700 0.95rem var(--mono); color: var(--ink); }
+.game-stat span { color: var(--muted); font-size: 0.68rem; }
+.game-note { color: var(--muted); font-size: 0.73rem; line-height: 1.4; }
 
 /* Flex Workload Slider Box */
 .workload-slider-box {
@@ -1479,7 +1493,7 @@ input[type=range].plain::-moz-range-thumb {
       <span class="pill" id="modePill">Live · Ashburn, VA</span>
       <button class="btn primary magnetic" id="connectBtn" aria-label="Connect hardware rack">Connect rack</button>
       <button class="btn magnetic" id="exportBtn" aria-label="Export schedule dispatch">Export plan</button>
-      <button class="btn magnetic" id="demoBtn" aria-label="Demo sensor sliders">Demo sensor</button>
+      <button class="btn magnetic" id="demoBtn" aria-label="Hide simulated air controls" aria-expanded="true">Hide air controls</button>
       <button class="btn magnetic" id="fsBtn" title="Full screen (F)" aria-label="Full screen">⤢</button>
       <button class="btn magnetic" id="helpBtn" title="Shortcuts (?)" aria-label="Keyboard shortcuts">?</button>
     </div>
@@ -1505,7 +1519,8 @@ input[type=range].plain::-moz-range-thumb {
     </div>
     <div class="workload-group">
       <span class="label">Weather Preset:</span>
-      <button class="btn-toggle active" id="btnLiveWeather">Live Ashburn</button>
+      <button class="btn-toggle active" id="btnSimulation">Simulated rack</button>
+      <button class="btn-toggle" id="btnLiveWeather">Live forecast</button>
       <button class="btn-toggle" id="btnHeatwave">☀️ July Heatwave</button>
       <button class="btn-toggle" id="btnHumid">⛈️ Humid Storm</button>
       <button class="btn-toggle" id="btnWinter">❄️ Winter Free-Cooling</button>
@@ -1533,6 +1548,7 @@ input[type=range].plain::-moz-range-thumb {
         <div class="chip c"><b class="num" id="chipCo2">–</b><span>carbon emissions reduced</span></div>
         <div class="chip g"><b class="num" id="chipLiters">–</b><span>liters saved on this job run</span></div>
       </div>
+      <p class="hint" id="savingsNote" aria-live="polite">Compared with running now · percentages show savings only.</p>
     </article>
 
     <!-- Cooling-Tower Air Intake & Wet-Bulb Thermodynamics -->
@@ -1563,11 +1579,27 @@ input[type=range].plain::-moz-range-thumb {
         <div><b class="num" id="airCo2" style="color:#c4b5fd">–</b><span>grid carbon intensity</span></div>
       </div>
 
-      <div class="demo-box" id="demoBox">
-        <label for="dT">Air temperature <span id="dTv">22 °C</span></label>
-        <input class="plain" type="range" id="dT" min="-5" max="38" step="0.5" value="22" aria-label="Demo air temperature">
-        <label for="dH">Relative humidity <span id="dHv">45%</span></label>
-        <input class="plain" type="range" id="dH" min="10" max="100" step="1" value="45" aria-label="Demo humidity">
+      <div class="demo-box show" id="demoBox">
+        <div class="sim-inputs" id="simInputs">
+          <b class="label" id="airControlSource">SIMULATED AIR · NO RACK CONNECTED</b>
+          <label for="dT">Air temperature <span id="dTv">22 °C</span></label>
+          <input class="plain" type="range" id="dT" min="-5" max="100" step="0.5" value="22" aria-label="Simulated air temperature">
+          <label for="dH">Relative humidity <span id="dHv">50%</span></label>
+          <input class="plain" type="range" id="dH" min="1" max="100" step="1" value="50" aria-label="Simulated relative humidity">
+          <span class="sim-caption" id="simCaption">Simulation only. A connected rack sensor replaces these values. Temperatures above 50°C are outside the wet-bulb approximation's standard range.</span>
+        </div>
+        <div>
+          <b class="label">Cooling fan response</b>
+          <div class="fan-modes" role="group" aria-label="Fan response mode">
+            <button class="fan-mode-btn active" type="button" data-fan-mode="auto" aria-pressed="true">Auto</button>
+            <button class="fan-mode-btn" type="button" data-fan-mode="eco" aria-pressed="false">Eco</button>
+            <button class="fan-mode-btn" type="button" data-fan-mode="slow" aria-pressed="false">Slow</button>
+            <button class="fan-mode-btn" type="button" data-fan-mode="fast" aria-pressed="false">Fast</button>
+            <button class="fan-mode-btn" type="button" data-fan-mode="faster" aria-pressed="false">Faster</button>
+            <button class="fan-mode-btn" type="button" data-fan-mode="turbo" aria-pressed="false">Turbo</button>
+          </div>
+          <span class="sim-caption" id="fanModeCaption">Auto adjusts speed to temperature and humidity. Manual modes set a minimum; heat can raise it.</span>
+        </div>
       </div>
     </article>
 
@@ -1868,24 +1900,37 @@ input[type=range].plain::-moz-range-thumb {
             <h3 style="margin:0;font:800 1.15rem var(--display);">Goose Creek Reservoir Buffer</h3>
           </div>
           <p style="margin:0;font-size:0.84rem;color:var(--muted);line-height:1.4;">
-            Every flexible batch job scheduled during night economizer windows acts like pouring fresh water directly back into the community reservoir.
+            Pick a source. One game day passes every 30 seconds; air conditions and workload determine the modeled water draw.
           </p>
+          <div class="game-day-stats" aria-live="polite">
+            <div class="game-stat"><b id="gameDay">Day 1</b><span id="gameDayTimer">next day in 30s</span></div>
+            <div class="game-stat"><b id="gameDailyDraw">0 L</b><span>water draw / game day</span></div>
+            <div class="game-stat"><b id="gameWaterCost">$0.00</b><span>water cost / game day</span></div>
+          </div>
+          <div class="game-day-stats">
+            <div class="game-stat"><b id="gameSavedLiters">0 L</b><span>water saved vs. baseline</span></div>
+            <div class="game-stat"><b id="gameSavedMoney">$0.00</b><span>budget saved / game day</span></div>
+            <div class="game-stat"><b id="gameFanMode">Eco</b><span>fan response</span></div>
+          </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
-            <button class="btn-game" id="btnPourWater">💧 Pour 10,000 L to Reservoir</button>
+            <button class="btn-game" id="btnPourWater">💧 Refill 10,000 L</button>
             <button class="btn-game" id="btnResetReservoir" style="background:rgba(255,255,255,0.08);border-color:var(--line);">↺ Reset</button>
           </div>
-          <div class="hotspot-pills">
-            <span class="hotspot-pill active" data-spot="ashburn">📍 Ashburn Alley (4.0 GW)</span>
-            <span class="hotspot-pill" data-spot="potomac">📍 Potomac Intake</span>
-            <span class="hotspot-pill" data-spot="goose">📍 Goose Creek Dam</span>
-            <span class="hotspot-pill" data-spot="peaker">📍 Possum Point Peaker</span>
+          <div class="hotspot-pills" role="group" aria-label="Choose simulated water source">
+            <button class="hotspot-pill" type="button" data-spot="ashburn" aria-pressed="false">🏙️ Ashburn municipal</button>
+            <button class="hotspot-pill" type="button" data-spot="potomac" aria-pressed="false">🌊 Potomac intake</button>
+            <button class="hotspot-pill active" type="button" data-spot="goose" aria-pressed="true">🏊 Goose Creek reservoir</button>
+            <button class="hotspot-pill" type="button" data-spot="reuse" aria-pressed="false">♻️ Reclaimed water</button>
+            <button class="hotspot-pill" type="button" data-spot="peaker" aria-pressed="false">⚡ Possum Point grid</button>
           </div>
+          <span class="game-note" id="gameSourceNote">Selected: Goose Creek reservoir · $6.50 / 1,000 gal</span>
+          <span class="game-note">Game model, not a reservoir forecast: virtual storage is 1,000,000 L and daily draw is capped for playability. Costs use the selected source's illustrative tariff.</span>
         </div>
 
         <div class="reservoir-tank-wrap">
           <div class="reservoir-label">
-            <span id="reservoirStatus">Reservoir Level: 68% (Safe Buffer)</span>
-            <span id="reservoirVolume">+0 Liters Poured</span>
+            <span id="reservoirStatus">Reservoir Level: 68% · Safe buffer</span>
+            <span id="reservoirVolume">680,000 / 1,000,000 L</span>
           </div>
           <div class="reservoir-water" id="reservoirWater"></div>
         </div>
@@ -2000,9 +2045,18 @@ document.documentElement.classList.add("js");
 // =====================================================================
 // Scientific model (calibrated with Kaggle ERA5 + PJM analysis)
 // =====================================================================
-const LAT = 39.04, LON = -77.49, REPLAY_MS = 30000;
+const LAT = 39.04, LON = -77.49, REPLAY_MS = 30000, GAME_DAY_MS = 30000;
 const PAGE_NAMES = ["STATUS", "AIR", "WETBLB", "WATER", "CO2", "FOCUS"];
 const PAGE_CARDS = ["cardDecision", "cardAir", "cardAir", "cardTimeline", "cardTimeline", "cardTimeline"];
+const FAN_MODES = ["eco", "slow", "fast", "faster", "turbo"];
+const FAN_PWM = [36, 82, 128, 184, 255];
+const GAME_SOURCES = {
+  ashburn: { label: "Ashburn municipal", freshwater: 1, tariff: 6.5 },
+  potomac: { label: "Potomac intake", freshwater: 1, tariff: 7.25 },
+  goose: { label: "Goose Creek reservoir", freshwater: 1, tariff: 6.5 },
+  reuse: { label: "Reclaimed water", freshwater: 0.2, tariff: 3.25 },
+  peaker: { label: "Possum Point grid mix", freshwater: 1.1, tariff: 8.5 }
+};
 
 const WORKLOAD_PRESETS = {
   inference: { name: "Batch Inference", hours: 4, kw: 500, label: "4-hour AI batch at 500 kW" },
@@ -2012,18 +2066,21 @@ const WORKLOAD_PRESETS = {
 };
 
 const S = {
-  results: null, profile: null, replay: [], forecast: null, sensor: null, demo: false,
+  results: null, profile: null, replay: [], forecast: null, sensor: null, rackConnected: false,
+  demo: true, simTemp: 22, simRh: 50, fanMode: "auto", waterSource: "goose",
   jobH: 4, jobKw: 500, workload: "inference", scaleMode: "single",
   w: 0.5, mode: "live", dayIdx: 0, rt: 0, playing: false, timer: null, choice: 0,
   writer: null, lastSent: "", lastSentAt: 0, lcd: ["~WETBULB", "        "], fan: 0, page: 0,
   race: { nOn: 0, nKg: 0, wOn: 0, wKg: 0 }, heat: -1, intensity: 0.2, ser: null, hoverI: null,
-  showWater: true, showCarbon: true, showEco: true, weatherPreset: "live"
+  showWater: true, showCarbon: true, showEco: true, weatherPreset: "simulation"
 };
 
 const $ = id => document.getElementById(id);
 const avg = a => a.reduce((s, v) => s + v, 0) / (a.length || 1);
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 const lerp = (a, b, t) => a + (b - a) * t;
+const RESERVOIR_CAPACITY_L = 1000000;
+const reservoirGame = { level: 680000, day: 1, lastDayAt: performance.now(), totalDraw: 0 };
 
 // Stull formula for wet-bulb temperature from air temp and relative humidity
 function stull(t, rh) {
@@ -2053,7 +2110,10 @@ function choose(C, W, w, duration = S.jobH) {
 
 const win = (arr, s, duration = S.jobH) => avg(arr.slice(s, s + duration));
 const pctSaved = (base, val) => base > 1e-9 ? 100 * (1 - val / base) : 0;
-const fanFor = water => water <= 0 ? 100 : Math.round(90 + 165 * Math.min(water, 3) / 3);
+const fanDemandIndex = twb => twb <= 10 ? 0 : twb <= 18 ? 1 : twb <= 25 ? 2 : twb <= 35 ? 3 : 4;
+const fanModeIndex = twb => Math.max(fanDemandIndex(twb), S.fanMode === "auto" ? 0 : FAN_MODES.indexOf(S.fanMode));
+const fanFor = twb => FAN_PWM[fanModeIndex(twb)];
+const fanLabel = twb => FAN_MODES[fanModeIndex(twb)];
 const hourLabel = h => (h % 12 || 12) + (h < 12 ? "AM" : "PM");
 
 // =====================================================================
@@ -2078,7 +2138,7 @@ function stepTweens(now) {
     if (k >= 1) { el._val = t.to; tweens.delete(el); }
   }
 }
-const fmtPct = v => Math.abs(v) < 0.5 ? "0%" : (v > 0 ? "−" : "+") + Math.abs(v).toFixed(0) + "%";
+const fmtPct = v => Math.max(0, v).toFixed(0) + "%";
 const fmtL = v => Math.max(0, Math.round(v)).toLocaleString() + " L";
 
 // =====================================================================
@@ -2121,6 +2181,15 @@ async function loadForecast() {
 function getSeries() {
   if (S.mode === "replay") {
     return S.replay[S.dayIdx].hours.map(h => ({ ...h, hour: +h.t.slice(11, 13) }));
+  }
+
+  if (S.weatherPreset === "simulation" && !S.rackConnected) {
+    const temp = S.simTemp, rh = S.simRh, twb = stull(temp, rh), cw = wue(twb);
+    return Array.from({ length: 24 }, (_, h) => {
+      const label = hourLabel(h);
+      const grid = S.profile?.recent_grid_by_hour?.[String(h)] || { ci: 460, gw: 2.05 };
+      return { label, hour: h, temp, rh, twb, ci: grid.ci, gw: grid.gw, wue: cw, water: cw + grid.gw };
+    });
   }
   
   // Synthetic Weather Presets for instant interactive testing
@@ -2197,7 +2266,7 @@ function render() {
   
   if (S.mode === "live") {
     $("decisionSub").textContent = freeCool
-      ? "Free dry-cooling available across all hours: Ashburn's cool ambient air requires 0 L/kWh chiller water, so today Wetbulb optimizes clean renewable power. Switch to Summer Heatwave above to see water savings."
+      ? `${S.weatherPreset === "simulation" ? "The simulated air" : "This weather scenario"} stays in free dry-cooling across the selected hours, requiring 0 L/kWh on-site chiller water. Increase temperature or humidity to see evaporative cooling demand.`
       : `Optimal window saves both water and carbon by avoiding peak evaporative heat and fossil peaker plant spikes. (Job power: ${(S.jobKw >= 1000 ? (S.jobKw/1000).toFixed(1) + " MW" : S.jobKw + " kW")}, duration: ${S.jobH}h).`;
   } else {
     $("decisionSub").textContent = `Replaying ${S.replay[S.dayIdx].label}: Real weather & PJM fuel mix, scheduled only with knowledge available at 9 AM submit time.`;
@@ -2206,10 +2275,19 @@ function render() {
   $("decisionLabel").textContent = `${S.mode === "live" ? "Next 24 hours" : "Historical Replay"} · a ${S.jobH}-hour AI job at ${(S.jobKw >= 1000 ? (S.jobKw/1000).toFixed(0) + " MW" : S.jobKw + " kW")}`;
 
   const curJobSavedLiters = (win(U, 0, S.jobH) - win(U, s, S.jobH)) * S.jobKw * S.jobH;
-  setNum("chipOnsite", pctSaved(win(U, 0, S.jobH), win(U, s, S.jobH)), fmtPct);
-  setNum("chipWater", pctSaved(win(W, 0, S.jobH), win(W, s, S.jobH)), fmtPct);
-  setNum("chipCo2", pctSaved(win(C, 0, S.jobH), win(C, s, S.jobH)), fmtPct);
+  const onsiteSaved = pctSaved(win(U, 0, S.jobH), win(U, s, S.jobH));
+  const totalWaterSaved = pctSaved(win(W, 0, S.jobH), win(W, s, S.jobH));
+  const carbonSaved = pctSaved(win(C, 0, S.jobH), win(C, s, S.jobH));
+  setNum("chipOnsite", onsiteSaved, fmtPct);
+  setNum("chipWater", totalWaterSaved, fmtPct);
+  setNum("chipCo2", carbonSaved, fmtPct);
   setNum("chipLiters", Math.max(0, curJobSavedLiters), fmtL);
+  const tradeoffs = [
+    onsiteSaved < 0 && `cooling water use increases ${Math.abs(onsiteSaved).toFixed(0)}%`,
+    totalWaterSaved < 0 && `total water use increases ${Math.abs(totalWaterSaved).toFixed(0)}%`,
+    carbonSaved < 0 && `carbon emissions increase ${Math.abs(carbonSaved).toFixed(0)}%`
+  ].filter(Boolean);
+  $("savingsNote").textContent = tradeoffs.length ? `Compared with running now: ${tradeoffs.join("; ")}. Savings stay at 0% when there is no saving.` : "Compared with running now · percentages show savings only.";
 
   drawChart(ser, s, S.mode === "live" ? null : S.rt);
   $("timelineTitle").textContent = S.mode === "live"
@@ -2218,6 +2296,7 @@ function render() {
 
   const currentHourData = ser[S.mode === "live" ? 0 : clamp(Math.floor(S.rt), 0, 23)];
   renderAir(currentHourData);
+  updateReservoirStats(currentHourData);
   updateRack(ser, s);
   updateScaleSimulator(curJobSavedLiters);
 
@@ -2238,6 +2317,25 @@ function renderAir(h) {
   $("airRh").textContent = h.rh != null ? Math.round(h.rh) + "%" : "–";
   setNum("airWue", wue(h.twb), v => v.toFixed(2) + " L/kWh", 500);
   setNum("airCo2", h.ci, v => Math.round(v) + " g/kWh", 500);
+  if (!S.rackConnected) {
+    const sourceNames = { simulation: "simulated inputs", live: "live forecast", heatwave: "July heatwave", humid: "humid storm", winter: "winter scenario" };
+    $("airSource").textContent = sourceNames[S.weatherPreset] || "weather scenario";
+  }
+  $("simInputs").hidden = S.rackConnected;
+  $("demoBtn").hidden = S.rackConnected;
+  $("airControlSource").textContent = S.rackConnected ? "RACK SENSOR ACTIVE" : "SIMULATED AIR · NO RACK CONNECTED";
+  $("simCaption").textContent = S.simTemp > 50
+    ? "Simulation only. A connected rack sensor replaces these values. Above 50°C, wet-bulb output is an illustrative extrapolation."
+    : "Simulation only. A connected rack sensor replaces these values. Temperatures above 50°C exceed the approximation's standard range.";
+  $("gameFanMode").textContent = fanLabel(h.twb)[0].toUpperCase() + fanLabel(h.twb).slice(1);
+  document.querySelectorAll("[data-fan-mode]").forEach(button => {
+    const active = button.dataset.fanMode === S.fanMode;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+  $("fanModeCaption").textContent = S.fanMode === "auto"
+    ? `Auto recommends ${fanLabel(h.twb)} at ${h.twb.toFixed(1)}°C wet-bulb.`
+    : `${S.fanMode[0].toUpperCase() + S.fanMode.slice(1)} is the minimum; heat demand can raise the fan to ${fanLabel(h.twb)}.`;
   drawGauge(h.twb);
 
   // Cooling Mode Pill update
@@ -2462,14 +2560,16 @@ function updateRack(ser, s) {
   const dur = S.jobH;
   if (S.mode === "live") {
     const cur = ser[0];
-    if (s === 0) { l1 = "*RUN NOW"; l2 = "WB " + cur.twb.toFixed(1) + "C"; fan = fanFor(cur.wue); }
-    else { l1 = `WAIT ${s}h`; l2 = `~-${Math.max(0, Math.round(pctSaved(win(U, 0, dur), win(U, s, dur))))}%H2O`; fan = 0; }
+    const simulatedAir = S.weatherPreset === "simulation" && !S.rackConnected;
+    if (simulatedAir) { l1 = "SIM AIR"; l2 = "WB " + cur.twb.toFixed(1) + "C"; fan = fanFor(cur.twb); }
+    else if (s === 0) { l1 = "*RUN NOW"; l2 = "WB " + cur.twb.toFixed(1) + "C"; fan = fanFor(cur.twb); }
+    else { l1 = `WAIT ${s}h`; l2 = `~${Math.max(0, Math.round(pctSaved(win(U, 0, dur), win(U, s, dur))))}%H2O`; fan = 0; }
   } else {
     const running = S.rt >= s && S.rt < s + dur;
     const done = S.rt >= 24 || S.rt >= s + dur;
     l1 = String(ser[h].hour).padStart(2, "0") + "h " + (running ? "*RUN" : done ? "DONE" : "WAIT");
     l2 = `~-${Math.max(0, Math.round(S.race.nOn - S.race.wOn))}L`;
-    fan = running ? fanFor(ser[h].wue) : 0;
+    fan = running ? fanFor(ser[h].twb) : 0;
   }
   S.lcd = [l1.slice(0, 8), l2.slice(0, 8)];
   S.fan = fan;
@@ -2479,7 +2579,7 @@ function updateRack(ser, s) {
   f.style.setProperty("--spin", fan > 0 ? (1.4 - fan / 255 * 1.15).toFixed(2) + "s" : "1s");
   const fanText = $("fanText");
   fanText.textContent = fan > 0
-    ? `Cooling fan ${Math.round(fan / 2.55)}% · ${ser[h].wue.toFixed(2)} L/kWh`
+    ? `Cooling fan ${fanLabel(ser[h].twb)} · ${Math.round(fan / 2.55)}% · ${ser[h].wue.toFixed(2)} L/kWh`
     : (S.mode === "replay" && S.rt >= s + dur ? "Cooling fan off · job finished" : "Cooling fan off · eco waiting");
   fanText.setAttribute("aria-label", fanText.textContent);
   sendL(S.lcd[0], S.lcd[1], fan, Math.round(ser[h].ci), Math.round(S.w * 100));
@@ -2685,12 +2785,22 @@ async function connect() {
       }
     }
   } catch (e) { if (e.name !== "NotFoundError") toast("Serial error: " + e.message); }
-  setLink(false); S.writer = null;
+  setLink(false); S.writer = null; render();
 }
 function setLink(on) {
+  S.rackConnected = on;
+  if (on) {
+    S.sensor = null;
+    S.weatherPreset = "live";
+  } else {
+    S.sensor = null;
+    S.weatherPreset = "simulation";
+  }
   $("linkDot").classList.toggle("on", on);
   $("linkText").textContent = on ? "Rack live" : "Rack offline";
   $("connectBtn").textContent = on ? "Connected ✓" : "Connect rack";
+  $("btnSimulation").classList.toggle("active", !on);
+  $("btnLiveWeather").classList.toggle("active", on);
 }
 function onLine(line) {
   const p = line.split(",");
@@ -2727,7 +2837,8 @@ const mouse = { x: -999, y: -999, lx: innerWidth / 2, ly: innerHeight / 3, tx: i
 // Pre-render particle sprites to offscreen canvases for 100x rendering boost
 const spriteCanvases = [];
 function initSprites() {
-  const hues = [195, 155, 38]; // Aquatic cyan, eco emerald, warm amber
+  spriteCanvases.length = 0;
+  const hues = document.documentElement.dataset.theme === "light" ? [190, 170, 38] : [218, 258, 38];
   hues.forEach(hue => {
     [16, 32].forEach(sz => {
       const c = document.createElement("canvas");
@@ -2747,6 +2858,7 @@ function initSprites() {
   });
 }
 initSprites();
+document.addEventListener("wetbulb:themechange", initSprites);
 
 function resize() {
   const dpr = Math.min(2, devicePixelRatio || 1);
@@ -2859,7 +2971,7 @@ function fillEvidence() {
   const r = S.results, bt = Object.fromEntries(r.backtest.map(b => [b.policy, b]));
   $("evidenceTitle").textContent = `What ${r.data.days_backtested.toLocaleString()} real days of Virginia data show`;
   
-  const pct1 = v => "−" + Math.abs(v).toFixed(1) + "%";
+  const pct1 = v => Math.max(0, v).toFixed(1) + "%";
   const stats = {
     sOnsite: [bt["Wetbulb"].onsite_saved_pct, pct1],
     sCarbonOnly: [bt["Carbon only"].onsite_saved_pct, pct1],
@@ -2902,7 +3014,7 @@ function fillEvidence() {
 
     h += `<g class="hbar-group" style="cursor:pointer;" data-p="${p}">
       <text x="10" y="${y + 14}" fill="#f1f5f9" font-size="12.5" font-weight="${isWb ? '700' : '500'}" ${sans}>${p}</text>
-      ${isWb ? `<rect x="74" y="${y + 2}" width="54" height="15" rx="4" fill="rgba(52,211,153,0.18)" stroke="rgba(52,211,153,0.4)"/><text x="101" y="${y + 13}" text-anchor="middle" fill="#34d399" font-size="9" font-weight="700" ${mono}>−24.3%</text>` : ''}
+      ${isWb ? `<rect x="74" y="${y + 2}" width="54" height="15" rx="4" fill="rgba(52,211,153,0.18)" stroke="rgba(52,211,153,0.4)"/><text x="101" y="${y + 13}" text-anchor="middle" fill="#34d399" font-size="9" font-weight="700" ${mono}>24.3%</text>` : ''}
       <rect x="${barX}" y="${y}" width="${w}" height="19" rx="9.5" fill="url(#bgR${i})" opacity="${isWb ? 1 : 0.85}"/>
       <text x="${barX - 8}" y="${y + 14}" fill="${col[i]}" font-size="12" font-weight="700" text-anchor="end" ${mono}>${Math.round(bt[p].onsite_liters).toLocaleString()} L</text>
     </g>`;
@@ -2990,14 +3102,27 @@ function toast(m, icon = "✨") {
 function toggleDemo() {
   S.demo = !S.demo;
   $("demoBox").classList.toggle("show", S.demo);
-  $("demoBtn").textContent = S.demo ? "Hide demo" : "Demo sensor";
-  if (S.demo) demoInput();
+  $("demoBtn").textContent = S.demo ? "Hide air controls" : "Show air controls";
+  $("demoBtn").setAttribute("aria-expanded", String(S.demo));
 }
 
 function demoInput() {
   const t = +$("dT").value, h = +$("dH").value;
   $("dTv").textContent = t + " °C"; $("dHv").textContent = h + "%";
-  setSensor(t, h, "demo sensor");
+  S.simTemp = t;
+  S.simRh = h;
+  if (!S.rackConnected) {
+    S.weatherPreset = "simulation";
+    $("btnSimulation").classList.add("active");
+    $("btnLiveWeather").classList.remove("active");
+    render();
+  }
+}
+
+function setFanMode(mode) {
+  if (mode !== "auto" && !FAN_MODES.includes(mode)) return;
+  S.fanMode = mode;
+  render();
 }
 
 function updateSliderBubble(pct) {
@@ -3028,12 +3153,14 @@ function setWorkload(key) {
 // Weather Presets
 function setWeatherPreset(p) {
   S.weatherPreset = p;
+  $("btnSimulation").classList.toggle("active", p === "simulation");
   $("btnLiveWeather").classList.toggle("active", p === "live");
   $("btnHeatwave").classList.toggle("active", p === "heatwave");
   $("btnHumid").classList.toggle("active", p === "humid");
   $("btnWinter").classList.toggle("active", p === "winter");
   render();
-  toast(`Active Weather Scenario: ${p === 'live' ? 'Live Ashburn Forecast' : (p === 'heatwave' ? 'July Heatwave' : (p === 'humid' ? 'Humid Storm' : 'Winter Free-Cooling'))}`);
+  const names = { simulation: "Simulated Rack", live: "Live Ashburn Forecast", heatwave: "July Heatwave", humid: "Humid Storm", winter: "Winter Free-Cooling" };
+  toast(`Active Weather Scenario: ${names[p] || p}`);
 }
 
 // Export Modal
@@ -3109,8 +3236,12 @@ $("wInference").onclick = () => setWorkload("inference");
 $("wTraining").onclick = () => setWorkload("training");
 $("wDiffusion").onclick = () => setWorkload("diffusion");
 $("wFinetune").onclick = () => setWorkload("finetune");
+document.querySelectorAll("[data-fan-mode]").forEach(button => {
+  button.onclick = () => setFanMode(button.dataset.fanMode);
+});
 
 // Weather scenario buttons
+$("btnSimulation").onclick = () => setWeatherPreset("simulation");
 $("btnLiveWeather").onclick = () => setWeatherPreset("live");
 $("btnHeatwave").onclick = () => setWeatherPreset("heatwave");
 $("btnHumid").onclick = () => setWeatherPreset("humid");
@@ -3148,45 +3279,83 @@ if (flexS) {
   };
 }
 
-// Reservoir Fill Game
-let pouredLiters = 0;
-const btnPour = $("btnPourWater");
-if (btnPour) {
-  btnPour.onclick = () => {
-    pouredLiters += 10000;
-    const curH = Math.min(95, 68 + (pouredLiters / 10000) * 4);
-    $("reservoirWater").style.height = curH + "%";
-    $("reservoirVolume").textContent = `+${pouredLiters.toLocaleString()} L Poured`;
-    $("reservoirStatus").textContent = `Reservoir Level: ${Math.round(curH)}% (${curH > 85 ? 'Plentiful Buffer 🌊' : 'Safe Buffer'})`;
-    toast(`💧 Added 10,000 Liters to Goose Creek Reservoir! (+${pouredLiters.toLocaleString()} L total)`);
-  };
-}
-const btnResetRes = $("btnResetReservoir");
-if (btnResetRes) {
-  btnResetRes.onclick = () => {
-    pouredLiters = 0;
-    $("reservoirWater").style.height = "68%";
-    $("reservoirVolume").textContent = "+0 Liters Poured";
-    $("reservoirStatus").textContent = "Reservoir Level: 68% (Safe Buffer)";
-    toast("Reservoir buffer reset to baseline.");
+function gameEconomy(h) {
+  const source = GAME_SOURCES[S.waterSource];
+  const rawLiters = Math.max(0, h.wue * S.jobKw * 24);
+  const freshLiters = rawLiters * source.freshwater;
+  const baselineLiters = 2.4 * S.jobKw * 24;
+  const cost = rawLiters / 3785.41 * source.tariff;
+  const baselineCost = baselineLiters / 3785.41 * 6.5;
+  return {
+    draw: Math.round(Math.min(50000, freshLiters)),
+    cost,
+    savedLiters: Math.max(0, baselineLiters - freshLiters),
+    savedMoney: Math.max(0, baselineCost - cost)
   };
 }
 
-// Hotspot pills
-document.querySelectorAll(".hotspot-pill").forEach(p => {
-  p.onclick = () => {
-    document.querySelectorAll(".hotspot-pill").forEach(x => x.classList.remove("active"));
-    p.classList.add("active");
-    const spot = p.dataset.spot;
-    const msgs = {
-      ashburn: "Ashburn Data Center Alley: 4.0 GW capacity consuming up to 15% of summer municipal water during peak heat.",
-      potomac: "Potomac River Intake: Primary drinking water source for 5 million DC metro & Northern Virginia residents.",
-      goose: "Goose Creek Reservoir: Loudoun Water's critical summer drought storage facility holding ~1 billion gallons.",
-      peaker: "Possum Point Peaker: High-carbon natural gas turbine fired during peak PJM heatwave hours."
-    };
-    toast(msgs[spot] || p.textContent);
+function updateReservoirStats(h) {
+  const source = GAME_SOURCES[S.waterSource];
+  const stats = gameEconomy(h);
+  $("gameDailyDraw").textContent = stats.draw.toLocaleString() + " L";
+  $("gameWaterCost").textContent = "$" + stats.cost.toFixed(2);
+  $("gameSavedLiters").textContent = Math.round(stats.savedLiters).toLocaleString() + " L";
+  $("gameSavedMoney").textContent = "$" + stats.savedMoney.toFixed(2);
+  $("gameSourceNote").textContent = `Selected: ${source.label} · $${source.tariff.toFixed(2)} / 1,000 gal`;
+}
+
+function paintReservoir() {
+  const level = clamp(reservoirGame.level / RESERVOIR_CAPACITY_L * 100, 0, 100);
+  const condition = level <= 20 ? "Low buffer" : level >= 85 ? "Plentiful buffer" : "Safe buffer";
+  $("reservoirWater").style.height = level + "%";
+  $("reservoirStatus").textContent = `Reservoir Level: ${Math.round(level)}% · ${condition}`;
+  $("reservoirVolume").textContent = `${Math.round(reservoirGame.level).toLocaleString()} / ${RESERVOIR_CAPACITY_L.toLocaleString()} L`;
+  $("gameDay").textContent = `Day ${reservoirGame.day}`;
+}
+
+function advanceReservoirDay() {
+  const h = S.ser?.[0] || (S.profile && S.forecast ? getSeries()[0] : { wue: 0 });
+  const draw = Math.min(reservoirGame.level, gameEconomy(h).draw);
+  reservoirGame.level -= draw;
+  reservoirGame.totalDraw += draw;
+  reservoirGame.day++;
+  paintReservoir();
+}
+
+$("btnPourWater").onclick = () => {
+  reservoirGame.level = Math.min(RESERVOIR_CAPACITY_L, reservoirGame.level + 10000);
+  paintReservoir();
+  toast("Added 10,000 L to the virtual reservoir buffer.", "💧");
+};
+$("btnResetReservoir").onclick = () => {
+  reservoirGame.level = 680000;
+  reservoirGame.day = 1;
+  reservoirGame.totalDraw = 0;
+  reservoirGame.lastDayAt = performance.now();
+  paintReservoir();
+};
+
+document.querySelectorAll(".hotspot-pill").forEach(button => {
+  button.onclick = () => {
+    S.waterSource = button.dataset.spot;
+    document.querySelectorAll(".hotspot-pill").forEach(option => {
+      const selected = option === button;
+      option.classList.toggle("active", selected);
+      option.setAttribute("aria-pressed", String(selected));
+    });
+    updateReservoirStats(S.ser?.[0] || getSeries()[0]);
   };
 });
+
+setInterval(() => {
+  const now = performance.now();
+  while (now - reservoirGame.lastDayAt >= GAME_DAY_MS) {
+    advanceReservoirDay();
+    reservoirGame.lastDayAt += GAME_DAY_MS;
+  }
+  const remaining = Math.max(0, Math.ceil((GAME_DAY_MS - (now - reservoirGame.lastDayAt)) / 1000));
+  $("gameDayTimer").textContent = `next day in ${remaining}s`;
+}, 250);
 
 // 3D Card Tilt Mouse Interaction
 document.querySelectorAll(".card").forEach(card => {
