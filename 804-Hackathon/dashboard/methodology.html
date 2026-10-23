@@ -159,6 +159,44 @@ header.top {
   margin: 12px 0;
   overflow-x: auto;
 }
+.flip-card { padding: 0; background: transparent; border: 0; box-shadow: none; perspective: 1100px; transform: none !important; transition: none; }
+.flip-card:hover { border-color: transparent; }
+.flip-inner { display: grid; transform-style: preserve-3d; transition: transform 700ms cubic-bezier(.2,.75,.2,1); }
+.flip-card.is-flipped .flip-inner { transform: rotateY(180deg); }
+.flip-face {
+  grid-area: 1 / 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--panel);
+  box-shadow: 0 16px 40px -15px rgba(0, 0, 0, 0.7);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.flip-face > h3, .flip-face > p, .flip-face > .formula-box { margin-top: 0 !important; margin-bottom: 0 !important; }
+.flip-back { transform: rotateY(180deg); }
+.flip-toggle {
+  align-self: flex-start;
+  margin-top: auto;
+  padding: 8px 12px;
+  border: 1px solid rgba(148, 163, 214, 0.28);
+  border-radius: 8px;
+  color: #f8fafc;
+  background: rgba(255,255,255,.06);
+  font: 600 .82rem var(--display);
+  cursor: pointer;
+}
+.flip-toggle:hover { border-color: var(--water); background: rgba(56,189,248,.12); }
+.flip-toggle:focus-visible { outline: 2px solid var(--water); outline-offset: 3px; }
+.card-sources { margin: 0; padding-left: 20px; color: var(--muted); font-size: .88rem; line-height: 1.65; }
+.card-sources li + li { margin-top: 10px; }
+.source-link { color: #7dd3fc; text-underline-offset: 3px; }
+.model-note { color: var(--muted); font-size: .84rem; line-height: 1.55; }
+@media (prefers-reduced-motion: reduce) { .flip-inner { transition-duration: 0.01ms; } }
 </style>
 </head>
 <body>
@@ -188,7 +226,7 @@ header.top {
   <!-- Multi-Page Site Navigation -->
   <nav class="site-nav" aria-label="Main Site Navigation">
     <a href="index.html" class="nav-tab">⚡ Live Dispatcher</a>
-    <a href="impact.html" class="nav-tab">🎮 Public Impact (Neal.fun)</a>
+    <a href="impact.html" class="nav-tab">🎮 Public Impact</a>
     <a href="backtest.html" class="nav-tab">📊 1,016-Day Evidence</a>
     <a href="calculator.html" class="nav-tab">🧮 What-If ROI Calculator</a>
     <a href="methodology.html" class="nav-tab active">📖 Methodology</a>
@@ -203,59 +241,88 @@ header.top {
     </p>
   </div>
 
-  <section class="grid-3">
-    <!-- Pillar 1 -->
-    <article class="card">
-      <span class="step-badge">Pillar 01 · Psychrometrics</span>
-      <h3 style="margin:8px 0 10px;font:800 1.25rem var(--display);">Wet-Bulb Thermodynamics</h3>
-      <p style="color:var(--muted);font-size:0.88rem;line-height:1.5;margin:0;">
-        Evaporative cooling towers reject server heat by evaporating water into the outside air. The rate of water consumption is bounded not by ambient dry-bulb temperature, but by <b>wet-bulb temperature (Twb)</b>.
-      </p>
-      <div class="formula-box">
-        Twb = T · atan(0.151977 · (RH% + 8.313659)^0.5)<br>
-        + atan(T + RH%) - atan(RH% - 1.676331)<br>
-        + 0.00391838 · RH%^1.5 · atan(0.023101 · RH%)<br>
-        - 4.686035  (Stull 2011)
+  <section class="grid-3" aria-label="Engineering methodology">
+    <article class="card flip-card">
+      <div class="flip-inner">
+        <div class="flip-face flip-front">
+          <span class="step-badge">Pillar 01 · Psychrometrics</span>
+          <h3 style="font:800 1.25rem var(--display);">Wet-Bulb Thermodynamics</h3>
+          <p style="color:var(--muted);font-size:0.88rem;line-height:1.5;">Evaporative cooling towers reject server heat by evaporating water into outside air. Water demand depends on <b>wet-bulb temperature (Twb)</b>, not dry-bulb temperature alone.</p>
+          <div class="formula-box">
+            Twb = T · atan(0.151977 · (RH% + 8.313659)^0.5)<br>
+            + atan(T + RH%) - atan(RH% - 1.676331)<br>
+            + 0.00391838 · RH%^1.5 · atan(0.023101 · RH%)<br>
+            - 4.686035 <a class="source-link" href="#source-stull">[1]</a>
+          </div>
+          <p style="color:#7dd3fc;font-size:0.84rem;">In this model, Twb ≤ 10°C selects dry economizer mode with <b>0.0 L/kWh</b> on-site cooling water <a class="source-link" href="#source-model">[4]</a>.</p>
+          <button class="flip-toggle" type="button" aria-label="Show psychrometrics sources" aria-expanded="false">↻ Sources</button>
+        </div>
+        <div class="flip-face flip-back" aria-hidden="true" inert>
+          <span class="step-badge">Source Notes · 01</span>
+          <h3 style="font:800 1.25rem var(--display);">Psychrometrics</h3>
+          <ul class="card-sources">
+            <li id="source-stull"><a class="source-link" href="https://doi.org/10.1175/JAMC-D-11-0143.1" target="_blank" rel="noopener noreferrer">Stull (2011), wet-bulb temperature from relative humidity and air temperature</a>. The approximation is intended for ordinary near-surface conditions (−20 to 50°C; 5–99% RH).</li>
+            <li id="source-model">The 10°C switch point and linear WUE curve are implementation assumptions, not a universal data-center operating standard. Facilities should replace them with site-specific controls and measured water data.</li>
+          </ul>
+          <button class="flip-toggle" type="button" aria-label="Return to psychrometrics overview" aria-pressed="false">↻ Back</button>
+        </div>
       </div>
-      <p style="color:#7dd3fc;font-size:0.84rem;margin:0;">
-        At Twb ≤ 10°C, data centers switch to 100% dry free air economizers, evaporating <b>0.0 L/kWh</b>.
-      </p>
     </article>
 
-    <!-- Pillar 2 -->
-    <article class="card">
-      <span class="step-badge">Pillar 02 · Grid Coupling</span>
-      <h3 style="margin:8px 0 10px;font:800 1.25rem var(--display);">PJM Marginal Fuel Mix</h3>
-      <p style="color:var(--muted);font-size:0.88rem;line-height:1.5;margin:0;">
-        Thermal power plants also consume massive water off-site for turbine condensers. We ingest real-time PJM generation by fuel type from EIA-930:
-      </p>
-      <div class="formula-box">
-        Nuclear: 2.54 L/kWh (Macknick 2012)<br>
-        Coal: 2.60 L/kWh (condenser cooling)<br>
-        Natural Gas CC: 0.75 L/kWh<br>
-        Solar & Wind: ~0.00 L/kWh
+    <article class="card flip-card">
+      <div class="flip-inner">
+        <div class="flip-face flip-front">
+          <span class="step-badge">Pillar 02 · Grid Coupling</span>
+          <h3 style="font:800 1.25rem var(--display);">PJM Generation Mix</h3>
+          <p style="color:var(--muted);font-size:0.88rem;line-height:1.5;">Hourly PJM generation by fuel type comes from EIA Form 930 <a class="source-link" href="#source-eia">[2]</a>. It is a generation mix, not a measurement of marginal dispatch.</p>
+          <div class="formula-box">
+            Nuclear: 2.54 L/kWh<br>
+            Coal: 2.60 L/kWh<br>
+            Natural Gas CC: 0.75 L/kWh<br>
+            Solar & Wind: ~0.00 L/kWh<br>
+            <a class="source-link" href="#source-macknick">[3]</a>
+          </div>
+          <p style="color:#c4b5fd;font-size:0.84rem;">The optimizer combines estimated upstream generation water with on-site cooling water.</p>
+          <button class="flip-toggle" type="button" aria-label="Show grid coupling sources" aria-expanded="false">↻ Sources</button>
+        </div>
+        <div class="flip-face flip-back" aria-hidden="true" inert>
+          <span class="step-badge">Source Notes · 02</span>
+          <h3 style="font:800 1.25rem var(--display);">Grid Coupling</h3>
+          <ul class="card-sources">
+            <li id="source-eia"><a class="source-link" href="https://www.eia.gov/electricity/gridmonitor/" target="_blank" rel="noopener noreferrer">U.S. Energy Information Administration, Hourly Electric Grid Monitor (Form EIA-930)</a>, the primary hourly generation dataset.</li>
+            <li id="source-macknick"><a class="source-link" href="https://doi.org/10.1088/1748-9326/7/4/045802" target="_blank" rel="noopener noreferrer">Macknick et al. (2012), operational water consumption and withdrawal factors for electricity-generating technologies</a>. Factors vary by plant and cooling system; these are representative model inputs, not PJM real-time measurements.</li>
+          </ul>
+          <button class="flip-toggle" type="button" aria-label="Return to grid coupling overview" aria-pressed="false">↻ Back</button>
+        </div>
       </div>
-      <p style="color:#c4b5fd;font-size:0.84rem;margin:0;">
-        Our Pareto optimizer accounts for both on-site cooling tower water and upstream power-plant water withdrawal.
-      </p>
     </article>
 
-    <!-- Pillar 3 -->
-    <article class="card">
-      <span class="step-badge">Pillar 03 · Hardware Protocol</span>
-      <h3 style="margin:8px 0 10px;font:800 1.25rem var(--display);">Rack Unit Telemetry</h3>
-      <p style="color:var(--muted);font-size:0.88rem;line-height:1.5;margin:0;">
-        Physical data center integration utilizes a custom serial daemon connected via WebSerial (115200 baud) to a 16x2 LCD mirror and PWM fan driver on each server rack:
-      </p>
-      <div class="formula-box">
-        Frame Format: `WBLB:[Twb]:[WUE]:[FAN_PWM]\n`<br>
-        Example: `WBLB:14.2:0.63:180`<br>
-        Joystick: Debounced GPIO interrupt<br>
-        Safety: Immediate thermal override
+    <article class="card flip-card">
+      <div class="flip-inner">
+        <div class="flip-face flip-front">
+          <span class="step-badge">Pillar 03 · Hardware Protocol</span>
+          <h3 style="font:800 1.25rem var(--display);">Rack Unit Telemetry</h3>
+          <p style="color:var(--muted);font-size:0.88rem;line-height:1.5;">A custom serial protocol connects the dashboard through Web Serial at 115200 baud to a 16×2 LCD mirror and PWM fan driver:</p>
+          <div class="formula-box">
+            Frame: <code>WBLB:[Twb]:[WUE]:[FAN_PWM]\n</code><br>
+            Example: <code>WBLB:14.2:0.63:180</code><br>
+            Joystick: debounced GPIO interrupt<br>
+            Safety: immediate thermal override
+          </div>
+          <p style="color:#34d399;font-size:0.84rem;">The protocol is designed for Arduino Uno/Nano, Raspberry Pi Pico, and ESP32 targets.</p>
+          <button class="flip-toggle" type="button" aria-label="Show hardware protocol sources" aria-expanded="false">↻ Sources</button>
+        </div>
+        <div class="flip-face flip-back" aria-hidden="true" inert>
+          <span class="step-badge">Source Notes · 03</span>
+          <h3 style="font:800 1.25rem var(--display);">Hardware Protocol</h3>
+          <ul class="card-sources">
+            <li><a class="source-link" href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API" target="_blank" rel="noopener noreferrer">MDN Web Serial API reference</a>; browser and device support varies.</li>
+            <li><a class="source-link" href="https://docs.arduino.cc/hardware/uno-rev3/" target="_blank" rel="noopener noreferrer">Arduino Uno documentation</a>, <a class="source-link" href="https://www.raspberrypi.com/documentation/microcontrollers/pico-series.html" target="_blank" rel="noopener noreferrer">Raspberry Pi Pico documentation</a>, and <a class="source-link" href="https://docs.espressif.com/projects/arduino-esp32/en/latest/" target="_blank" rel="noopener noreferrer">Arduino-ESP32 documentation</a>.</li>
+            <li>Each board requires compatible firmware and a supported serial connection; this is not plug-and-play without that setup.</li>
+          </ul>
+          <button class="flip-toggle" type="button" aria-label="Return to hardware protocol overview" aria-pressed="false">↻ Back</button>
+        </div>
       </div>
-      <p style="color:#34d399;font-size:0.84rem;margin:0;">
-        Works out-of-the-box with Arduino Uno/Nano, Raspberry Pi Pico, and ESP32 microcontrollers.
-      </p>
     </article>
   </section>
 
@@ -263,28 +330,35 @@ header.top {
   <article class="card">
     <h3 style="margin:0 0 12px;font:800 1.25rem var(--display);">Scientific Citations & Primary Datasets</h3>
     <ul style="margin:0;padding-left:20px;color:var(--muted);font-size:0.88rem;line-height:1.7;">
-      <li><b>PJM Interconnection Grid Fuel Mix:</b> EIA Form 930 Hourly Electric Grid Monitor via Kaggle (kaitoland, 2024–2026).</li>
-      <li><b>Ashburn VA Atmospheric Thermodynamics:</b> Open-Meteo ERA5 Reanalysis & High-Resolution NOAA HRRR Forecast API for Loudoun County, VA (39.0437° N, 77.4875° W).</li>
-      <li><b>Power Plant Water Consumption Factors:</b> National Renewable Energy Laboratory (NREL), Macknick et al. (2012), <i>Operational water consumption and withdrawal factors for electricity generating technologies</i>.</li>
-      <li><b>Data Center Cooling Tower Evaporation:</b> Lawrence Berkeley National Laboratory (LBNL, Shehabi et al. 2016), <i>United States Data Center Energy Usage Report</i>; calibrated to 1.8 L/kWh U.S. average baseline.</li>
-      <li><b>Psychrometric Wet-Bulb Equation:</b> Stull, R. (2011), <i>Wet-Bulb Temperature from Relative Humidity and Air Temperature</i>, Journal of Applied Meteorology and Climatology.</li>
+      <li><b>PJM generation:</b> <a class="source-link" href="https://www.eia.gov/electricity/gridmonitor/" target="_blank" rel="noopener noreferrer">EIA Form 930 Hourly Electric Grid Monitor</a>.</li>
+      <li><b>Ashburn weather:</b> <a class="source-link" href="https://open-meteo.com/en/docs" target="_blank" rel="noopener noreferrer">Open-Meteo forecast and historical weather API documentation</a>; forecast values are fetched live. NOAA <a class="source-link" href="https://www.nco.ncep.noaa.gov/pmb/products/hrrr/" target="_blank" rel="noopener noreferrer">HRRR product information</a>.</li>
+      <li><b>Generation water factors:</b> <a class="source-link" href="https://doi.org/10.1088/1748-9326/7/4/045802" target="_blank" rel="noopener noreferrer">Macknick et al. (2012), operational water consumption and withdrawal factors for electricity-generating technologies</a>.</li>
+      <li><b>Data-center context:</b> <a class="source-link" href="https://eta-publications.lbl.gov/publications/united-states-data-center-energy-usage" target="_blank" rel="noopener noreferrer">Shehabi et al. (2016), United States Data Center Energy Usage Report</a>. The WUE curve and 10°C control threshold used here are project assumptions.</li>
+      <li><b>Wet-bulb equation:</b> <a class="source-link" href="https://doi.org/10.1175/JAMC-D-11-0143.1" target="_blank" rel="noopener noreferrer">Stull (2011), Journal of Applied Meteorology and Climatology</a>.</li>
     </ul>
   </article>
 </div>
 
 <script>
-// 3D Card Tilt Mouse Interaction
-document.querySelectorAll(".card").forEach(card => {
-  card.addEventListener("pointermove", e => {
-    const r = card.getBoundingClientRect();
-    const x = e.clientX - r.left, y = e.clientY - r.top;
-    const cx = r.width / 2, cy = r.height / 2;
-    const tiltX = (y - cy) / cy * -3;
-    const tiltY = (x - cx) / cx * 3;
-    card.style.transform = `perspective(1000px) rotateX(${tiltX.toFixed(2)}deg) rotateY(${tiltY.toFixed(2)}deg) translateZ(2px)`;
+document.querySelectorAll(".flip-card").forEach(card => {
+  const front = card.querySelector(".flip-front");
+  const back = card.querySelector(".flip-back");
+  const frontButton = front.querySelector(".flip-toggle");
+  const setFlipped = flipped => {
+    card.classList.toggle("is-flipped", flipped);
+    front.inert = flipped;
+    front.setAttribute("aria-hidden", String(flipped));
+    back.inert = !flipped;
+    back.setAttribute("aria-hidden", String(!flipped));
+    frontButton.setAttribute("aria-expanded", String(flipped));
+  };
+  card.querySelectorAll(".flip-toggle").forEach(button => {
+    button.addEventListener("click", () => {
+      setFlipped(!card.classList.contains("is-flipped"));
+    });
   });
-  card.addEventListener("pointerleave", () => {
-    card.style.transform = "";
+  card.querySelectorAll('a[href^="#source-"]').forEach(link => {
+    link.addEventListener("click", () => setFlipped(true));
   });
 });
 </script>

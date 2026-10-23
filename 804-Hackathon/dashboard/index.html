@@ -469,9 +469,13 @@ button { cursor: pointer; border: none; background: none; }
 /* Gauge Card */
 .gauge-wrap { position: relative; display: grid; place-items: center; margin: 4px 0; }
 #gauge { width: 100%; max-width: 230px; height: auto; overflow: visible; }
-.gauge-read { position: absolute; top: 52%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+.gauge-read { position: absolute; top: 52%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; }
 .gauge-read b { display: block; font: 800 2.4rem/1 var(--display); letter-spacing: -0.03em; }
 .gauge-read span { color: var(--muted); font-size: 0.82rem; }
+.gauge-scale { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; margin: -4px 10px 12px; color: var(--muted); font: 600 0.64rem var(--mono); }
+.gauge-scale span:first-child { text-align: left; }
+.gauge-scale span:nth-child(2) { color: var(--eco-bright); text-align: center; }
+.gauge-scale span:last-child { text-align: right; }
 
 /* Cooling Mode Badge */
 .cooling-mode-pill {
@@ -776,8 +780,9 @@ input[type=range].plain::-moz-range-thumb {
 }
 .fan-row { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 0.88rem; }
 #fanSvg { width: 48px; height: 48px; filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.5)); }
-#fanSvg.spin .blades { animation: spin var(--spin, 1s) linear infinite; transform-origin: 24px 24px; }
+#fanSvg.spin .blades { animation: spin var(--spin, 1s) linear infinite; transform-box: view-box; transform-origin: center; }
 @keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { #fanSvg.spin .blades { animation-duration: 4s; } }
 
 .pages { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
 .pages span {
@@ -1018,8 +1023,8 @@ input[type=range].plain::-moz-range-thumb {
   font-size: 0.78rem;
 }
 
-/* ---------- Neal.fun Style Public Impact & Gamification ---------- */
-.neal-section {
+/* ---------- Public Impact & Gamification ---------- */
+.impact-section {
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -1079,17 +1084,17 @@ input[type=range].plain::-moz-range-thumb {
   color: #f8fafc;
 }
 
-/* Neal.fun Public Impact Grid with 3D Flip Cards */
-.neal-grid {
+/* Public Impact Grid with 3D Flip Cards */
+.impact-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
 }
 @media (max-width: 950px) {
-  .neal-grid { grid-template-columns: repeat(2, 1fr); }
+  .impact-grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 620px) {
-  .neal-grid { grid-template-columns: 1fr; }
+  .impact-grid { grid-template-columns: 1fr; }
 }
 
 .flip-card {
@@ -1189,7 +1194,7 @@ input[type=range].plain::-moz-range-thumb {
   color: #34d399;
 }
 
-/* Neal.fun Interactive Reservoir Mini-Game & Hotspots */
+/* Interactive Reservoir Mini-Game & Hotspots */
 .reservoir-card {
   padding: 18px 22px;
   border-radius: 20px;
@@ -1483,7 +1488,7 @@ input[type=range].plain::-moz-range-thumb {
   <!-- Multi-Page Site Navigation -->
   <nav class="site-nav" aria-label="Main Site Navigation">
     <a href="index.html" class="nav-tab active">⚡ Live Dispatcher</a>
-    <a href="impact.html" class="nav-tab">🎮 Public Impact (Neal.fun)</a>
+    <a href="impact.html" class="nav-tab">🎮 Public Impact</a>
     <a href="backtest.html" class="nav-tab">📊 1,016-Day Evidence</a>
     <a href="calculator.html" class="nav-tab">🧮 What-If ROI Calculator</a>
     <a href="methodology.html" class="nav-tab">📖 Methodology</a>
@@ -1538,12 +1543,13 @@ input[type=range].plain::-moz-range-thumb {
       </div>
       
       <div class="gauge-wrap">
-        <svg id="gauge" viewBox="0 0 300 200" aria-label="Wet-bulb gauge"></svg>
+        <svg id="gauge" viewBox="0 0 300 200" role="img" aria-label="Wet-bulb temperature gauge"></svg>
         <div class="gauge-read">
           <b class="num" id="airTwb">–</b>
           <span>°C wet-bulb</span>
         </div>
       </div>
+      <div class="gauge-scale" aria-hidden="true"><span>−10°C</span><span>FREE COOLING ≤10°C</span><span>30°C</span></div>
       
       <div class="cooling-mode-pill free" id="coolingModePill">
         <span>❄️</span>
@@ -1698,8 +1704,8 @@ input[type=range].plain::-moz-range-thumb {
     </div>
   </section>
 
-  <!-- Neal.fun Style Virginia Public Impact & Gamification Experience -->
-  <section class="neal-section reveal">
+  <!-- Virginia Public Impact & Gamification Experience -->
+  <section class="impact-section reveal">
     <!-- Live Real-Time Evaporation & Conservation Ticker -->
     <div class="ticker-banner">
       <div class="ticker-pulse">
@@ -1724,11 +1730,11 @@ input[type=range].plain::-moz-range-thumb {
       </div>
     </div>
 
-    <!-- Neal.fun Public Impact 3D Flip Card Grid -->
+    <!-- Public Impact 3D Flip Card Grid -->
     <div class="card reveal" style="display:flex;flex-direction:column;gap:16px;">
       <div class="card-head">
         <div>
-          <h2>🎮 Community Impact Explorer (Neal.fun Mode)</h2>
+          <h2>🎮 Virginia Community Impact Explorer</h2>
           <span class="hint">Click or hover any card to flip and discover the tangible local Virginia equivalency</span>
         </div>
         <div class="workload-slider-box">
@@ -1738,7 +1744,7 @@ input[type=range].plain::-moz-range-thumb {
         </div>
       </div>
 
-      <div class="neal-grid">
+      <div class="impact-grid">
         <!-- Card 1: Olympic Swimming Pools -->
         <div class="flip-card" onclick="this.classList.toggle('flipped')">
           <div class="flip-card-inner">
@@ -1810,7 +1816,7 @@ input[type=range].plain::-moz-range-thumb {
             <div class="flip-back">
               <h4>🥤 3.7x to the Moon</h4>
               <p>1.44 billion 500ml water bottles stacked end-to-end reach 289,000 kilometers into the sky — more than 75% of the distance from the Earth all the way to the Moon!</p>
-              <span class="foot">Neal.fun Space Scale</span>
+              <span class="foot">Space Scale</span>
             </div>
           </div>
         </div>
@@ -1854,7 +1860,7 @@ input[type=range].plain::-moz-range-thumb {
         </div>
       </div>
 
-      <!-- Neal.fun Interactive Reservoir Mini-Game Widget -->
+      <!-- Interactive Reservoir Mini-Game Widget -->
       <div class="reservoir-card">
         <div class="reservoir-controls">
           <div style="display:flex;align-items:center;gap:8px;">
@@ -2106,9 +2112,9 @@ async function loadForecast() {
     const now = new Date(), m = now.getMonth() + 1;
     S.forecast = Array.from({ length: 24 }, (_, k) => {
       const h = (now.getHours() + k) % 24, mh = S.profile ? S.profile.month_hour[`${m}-${h}`] : null;
-      return { hour: h, label: hourLabel(h), temp: 22, rh: 50, twb: mh ? mh.twb : 12 };
+      return { hour: h, label: hourLabel(h), temp: null, rh: null, twb: mh ? mh.twb : 12 };
     });
-    if (!S.sensor) $("airSource").textContent = "typical profile";
+    if (!S.sensor) $("airSource").textContent = "typical wet-bulb profile";
   }
 }
 
@@ -2275,7 +2281,6 @@ function drawGauge(twb) {
   };
   const av = lerp(a0, a1, Math.max(t, 0.002)), [px, py] = pol(av);
   const free = pol(lerp(a0, a1, 20 / 40));
-  const mono = 'font-family="JetBrains Mono, monospace"';
 
   $("gauge").innerHTML = `<defs>
       <linearGradient id="gg" x1="0" x2="1">
@@ -2292,11 +2297,9 @@ function drawGauge(twb) {
     <path d="${arc(a0, av)}" stroke="url(#gg)" stroke-width="14" fill="none" stroke-linecap="round" filter="url(#gaugeGlow)" opacity=".7"/>
     <path d="${arc(a0, av)}" stroke="url(#gg)" stroke-width="14" fill="none" stroke-linecap="round"/>
     <circle cx="${free[0]}" cy="${free[1]}" r="3.5" fill="#6ee7b7"/>
-    <text x="${free[0]}" y="${free[1] - 14}" fill="#34d399" font-size="10" font-weight="700" text-anchor="middle" ${mono}>FREE COOLING ≤10°</text>
     <circle cx="${px}" cy="${py}" r="16" fill="#ffffff" opacity=".18"/>
     <circle cx="${px}" cy="${py}" r="7" fill="#ffffff"/>
-    <text x="${pol(a0)[0]}" y="${pol(a0)[1] + 24}" fill="#8493b8" font-size="11" text-anchor="middle" ${mono}>-10°C</text>
-    <text x="${pol(a1)[0]}" y="${pol(a1)[1] + 24}" fill="#8493b8" font-size="11" text-anchor="middle" ${mono}>30°C</text>`;
+    <title>Wet-bulb temperature ${twb.toFixed(1)} degrees Celsius</title>`;
 }
 
 // =====================================================================
@@ -2474,9 +2477,11 @@ function updateRack(ser, s) {
   const f = $("fanSvg");
   f.classList.toggle("spin", fan > 0);
   f.style.setProperty("--spin", fan > 0 ? (1.4 - fan / 255 * 1.15).toFixed(2) + "s" : "1s");
-  $("fanText").textContent = fan > 0
+  const fanText = $("fanText");
+  fanText.textContent = fan > 0
     ? `Cooling fan ${Math.round(fan / 2.55)}% · ${ser[h].wue.toFixed(2)} L/kWh`
     : (S.mode === "replay" && S.rt >= s + dur ? "Cooling fan off · job finished" : "Cooling fan off · eco waiting");
+  fanText.setAttribute("aria-label", fanText.textContent);
   sendL(S.lcd[0], S.lcd[1], fan, Math.round(ser[h].ci), Math.round(S.w * 100));
 }
 
@@ -2498,7 +2503,7 @@ function drawPages() {
 }
 
 // =====================================================================
-// Scale Impact Simulator & Neal.fun Public Impact
+// Scale Impact Simulator & Public Impact
 // =====================================================================
 function updateScaleSimulator(jobSavedLiters) {
   const baseLiters = Math.max(0, jobSavedLiters);
@@ -3120,7 +3125,7 @@ function toggleScaleBtn(id) {
   ["btnScaleSingle", "btnScaleCampus", "btnScaleVA"].forEach(b => $(b).classList.toggle("active", b === id));
 }
 
-// Neal.fun Real-Time Evaporation Clock
+// Real-Time Evaporation Clock
 let tickerStart = performance.now();
 setInterval(() => {
   const elapsedSec = (performance.now() - tickerStart) / 1000;
@@ -3132,7 +3137,7 @@ setInterval(() => {
   if (elT) elT.textContent = Math.floor(elapsedSec) + "s";
 }, 200);
 
-// Neal.fun Flexible Workload Slider
+// Flexible Workload Slider
 const flexS = $("flexSlider");
 if (flexS) {
   flexS.oninput = e => {
@@ -3143,7 +3148,7 @@ if (flexS) {
   };
 }
 
-// Neal.fun Reservoir Fill Game
+// Reservoir Fill Game
 let pouredLiters = 0;
 const btnPour = $("btnPourWater");
 if (btnPour) {
